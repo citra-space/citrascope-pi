@@ -1,0 +1,43 @@
+# GitHub Actions workflow to build a Raspberry Pi image with KStars installed using pi-gen
+# This workflow uses Docker to run pi-gen and outputs the final image as an artifact
+
+name: Build Raspberry Pi Image with KStars
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Clone pi-gen
+        run: |
+          git clone https://github.com/RPi-Distro/pi-gen.git
+          cd pi-gen
+          git checkout main
+
+      - name: Add custom stage for KStars
+        run: |
+          cd pi-gen
+          mkdir -p stage2/04-kstars
+          echo '#!/bin/bash\nset -e\napt-get update\napt-get install -y kstars' > stage2/04-kstars/00-install-kstars
+          chmod +x stage2/04-kstars/00-install-kstars
+
+      - name: Build image
+        run: |
+          cd pi-gen
+          sudo ./build-docker.sh
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: raspberry-pi-kstars-image
+          path: pi-gen/deploy/*.img*
