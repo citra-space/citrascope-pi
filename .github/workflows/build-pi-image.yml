@@ -22,7 +22,7 @@ jobs:
         run: |
           git clone https://github.com/RPi-Distro/pi-gen.git
           cd pi-gen
-          git checkout main
+          git checkout master
 
       - name: Add custom stage for KStars
         run: |
