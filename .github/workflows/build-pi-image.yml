@@ -18,11 +18,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Clone pi-gen
+      - name: Clone pi-gen (arm64 branch for 64-bit image)
         run: |
-          git clone https://github.com/RPi-Distro/pi-gen.git
-          cd pi-gen
-          git checkout master
+          git clone --branch arm64 https://github.com/RPi-Distro/pi-gen.git
 
       - name: Add custom stage for KStars
         run: |
@@ -43,6 +41,11 @@ jobs:
         run: |
           cd pi-gen
           sudo ./build-docker.sh
+
+      - name: Print debootstrap log on failure
+        if: failure()
+        run: |
+          cat pi-gen/work/kstars-pi/stage0/debootstrap.log || echo "No debootstrap log found."
 
       - name: Upload image artifact
         uses: actions/upload-artifact@v4
