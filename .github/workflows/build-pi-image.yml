@@ -31,6 +31,11 @@ jobs:
           echo '#!/bin/bash\nset -e\napt-get update\napt-get install -y kstars' > stage2/04-kstars/00-install-kstars
           chmod +x stage2/04-kstars/00-install-kstars
 
+      - name: Create pi-gen config file
+        run: |
+          cd pi-gen
+          echo "IMG_NAME='kstars-pi'" > config
+
       - name: Build image
         run: |
           cd pi-gen
