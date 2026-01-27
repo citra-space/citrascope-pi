@@ -1,4 +1,4 @@
-# Lemon Pi
+# CitraScope Pi
 
 Build custom Raspberry Pi images for telescope operations with [Citrascope](https://github.com/citra-space/citrascope).
 
