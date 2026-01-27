@@ -105,9 +105,10 @@ def main():
 
         update_system(ROOTFS_MOUNT)
         print("Successfully updated and installed packages")
+        return True
     except Exception as e:
         print(f"Error updating packages: {e}")
-        sys.exit(1)
+        return False
 
 if __name__ == "__main__":
-    main()
+    sys.exit(0 if main() else 1)

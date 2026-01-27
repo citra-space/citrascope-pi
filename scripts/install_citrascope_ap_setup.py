@@ -66,9 +66,10 @@ def main():
         
         install_ap_setup(ROOTFS_MOUNT)
         print(f"Successfully installed AP setup")
+        return True
     except Exception as e:
         print(f"Error installing AP setup: {e}")
-        sys.exit(1)
+        return False
 
 if __name__ == "__main__":
-    main()
+    sys.exit(0 if main() else 1)

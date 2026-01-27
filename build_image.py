@@ -155,14 +155,39 @@ def build_complete_image(base_image_path, output_path):
     print(f"Source: {base_image_path}", flush=True)
     print(f"Output: {output_path}", flush=True)
     print(f"\nCopying base image...", flush=True)
+    
+    # Remove existing output file if it exists
+    if output_path.exists():
+        output_path.unlink()
+    
     shutil.copy2(base_image_path, output_path)
     print(f"✓ Image copied\n", flush=True)
     
     # Customize base image
-    customize_base_image(str(output_path))
+    print(f"{'='*60}", flush=True)
+    print(f"Customizing base image...", flush=True)
+    print(f"{'='*60}\n", flush=True)
+    try:
+        customize_base_image(str(output_path))
+        print(f"\n✓ Base image customization complete\n", flush=True)
+    except Exception as e:
+        print(f"\n✗ Base image customization failed: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        raise
     
     # Install Citrascope
-    install_citrascope_software(str(output_path))
+    print(f"\n{'='*60}", flush=True)
+    print(f"Installing Citrascope software...", flush=True)
+    print(f"{'='*60}\n", flush=True)
+    try:
+        install_citrascope_software(str(output_path))
+        print(f"\n✓ Citrascope installation complete\n", flush=True)
+    except Exception as e:
+        print(f"\n✗ Citrascope installation failed: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        raise
     
     print(f"\n{'='*60}")
     print(f"✓ BUILD COMPLETE")

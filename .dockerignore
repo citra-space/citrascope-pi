@@ -1,0 +1,25 @@
+# Exclude large image files from Docker build context
+*.img
+*.img.xz
+*.img.gz
+*.img.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+
+# Docs
+*.md
+!README.md

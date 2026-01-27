@@ -1,0 +1,9 @@
+services:
+  builder:
+    build: .
+    privileged: true  # Required for kpartx/loop devices
+    volumes:
+      - .:/workspace
+      - /dev:/dev  # Access to loop devices
+    working_dir: /workspace
+    command: python3 build_image.py

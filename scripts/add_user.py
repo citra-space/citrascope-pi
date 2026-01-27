@@ -134,9 +134,10 @@ def main():
     try:
         add_user(ROOTFS_MOUNT, USERNAME, PASSWORD, USER_UID, USER_GID)
         print(f"Successfully added user {USERNAME}")
+        return True
     except Exception as e:
         print(f"Error adding user: {e}")
-        sys.exit(1)
+        return False
 
 if __name__ == "__main__":
-    main()
+    sys.exit(0 if main() else 1)

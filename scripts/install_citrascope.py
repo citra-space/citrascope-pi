@@ -115,11 +115,11 @@ def main():
     
     if not os.path.exists(ROOTFS_MOUNT):
         print(f"Error: Root filesystem path {ROOTFS_MOUNT} does not exist")
-        sys.exit(1)
+        return False
     
     if not os.path.exists(HOMEDIR):
         print(f"Error: Home directory {HOMEDIR} does not exist. User must be created first.")
-        sys.exit(1)
+        return False
     
     try:
         # Ensure DNS resolution works
@@ -144,10 +144,11 @@ def main():
             subprocess.run(['mv', resolv_backup, resolv_conf])
         
         print("Citrascope installation completed successfully!")
+        return True
         
     except Exception as e:
         print(f"Error installing Citrascope: {e}")
-        sys.exit(1)
+        return False
 
 if __name__ == "__main__":
-    main()
+    sys.exit(0 if main() else 1)

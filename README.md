@@ -6,6 +6,8 @@ Creates a turnkey SD card image with Citrascope telescope control software, INDI
 
 ## Quick Start
 
+### Building on Linux
+
 **Requirements:** Linux machine with Python 3.10+, kpartx, qemu-user-static
 
 ```bash
@@ -16,10 +18,23 @@ sudo apt-get install kpartx python3 qemu-user-static
 sudo ./build_image.py
 
 # Flash to SD card
-sudo dd if=raspios-bookworm-arm64-lite-citrascope.img of=/dev/sdX bs=4M status=progress
+sudo dd if=2025-12-04-raspios-trixie-arm64-lite-citrascope.img of=/dev/sdX bs=4M status=progress
 ```
 
-**Build time:** 15-30 minutes. **Final image:** ~5-6GB.
+### Building on Mac/Windows (Docker)
+
+**Requirements:** Docker Desktop
+
+```bash
+# Build image using Docker
+./build-docker.sh
+
+# Flash to SD card (use Raspberry Pi Imager or Balena Etcher)
+```
+
+**Note on Docker Security:** The build requires `--privileged` mode to access loop devices (needed for mounting disk images). The container runs as your user (not root) to avoid permission issues. This is standard practice for disk image manipulation in containers.
+
+**Build time:** 15-30 minutes. **Final image:** ~3-4GB.
 
 ## What You Get
 
@@ -81,35 +96,22 @@ sudo ./build_image.py customized.img --citrascope-only
 ssh citra@<pi-ip>
 ```
 
-**Citrascope not starting:**
-```bash
-sudo systemctl status citrascope
-sudo journalctl -u citrascope -f
-```
+## How It Works
 
-**WiFi AP not appearing:**
-```bash
-sudo systemctl status citrascope-ap-setup
-sudo journalctl -u citrascope-ap-setup
-```
+The build process:
 
-## Project Structure
+1. **Downloads** Raspberry Pi OS Lite (Trixie ARM64, Debian 13)
+2. **Mounts** the image using loop devices (kpartx)
+3. **Customizes** via direct file operations and chroot:
+   - Creates `citra` user with sudo access
+   - Sets hostname to `citrascope`
+   - Enables SSH
+   - Installs system packages (INDI, Python, build tools)
+4. **Installs** Citrascope in Python venv with systemd service
+5. **Configures** WiFi AP fallback for field use
+6. **Unmounts** and outputs ready-to-flash image
 
-```
-lemon-pi/
-├── build_image.py          # Main build script
-├── scripts/
-│   ├── config.py          # Centralized configuration
-│   ├── mount_img.py       # Image mounting utilities
-│   ├── resize_fs.py       # Filesystem resizing
-│   ├── add_user.py        # User creation
-│   ├── set_hostname.py    # Hostname configuration
-│   ├── enable_ssh.py      # SSH enablement
-│   ├── update_upgrade_chroot.py  # Package installation
-│   ├── install_citrascope.py     # Citrascope installation
-│   └── citrascope-ap-setup.py    # WiFi AP setup (runs on Pi)
-└── README.md
-```
+All modifications happen on your build machine - the Pi receives a complete, pre-configured image.
 
 ## Resources
 

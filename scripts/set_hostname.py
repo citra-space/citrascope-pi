@@ -66,14 +66,14 @@ def main():
 
     if not os.path.exists(rootfs_path):
         print(f"Error: Root filesystem path {rootfs_path} does not exist")
-        sys.exit(1)
+        return False
 
     if set_hostname(rootfs_path, hostname):
         print(f"Successfully set hostname to {hostname}")
-        sys.exit(0)
+        return True
     else:
         print("Failed to set hostname")
-        sys.exit(1)
+        return False
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(0 if main() else 1)
