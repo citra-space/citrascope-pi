@@ -13,26 +13,26 @@ from pathlib import Path
 import shutil
 import urllib.request
 import lzma
-import os
 
 # Check Python version
 if sys.version_info < (3, 10):
-    print("Error: Python 3.10 or higher required")
-    print(f"Current version: {sys.version}")
+    print("Error: Python 3.10 or higher required", flush=True)
+    print(f"Current version: {sys.version}", flush=True)
     sys.exit(1)
 
 # Add scripts directory to path
 SCRIPTS_DIR = Path(__file__).parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from config import HOSTNAME
-from mount_img import ImageMounter
-from resize_fs import resize_filesystem
-import add_user
-import set_hostname
-import enable_ssh
-import update_upgrade_chroot
-import install_citrascope
+# Now import from scripts directory
+from scripts.config import HOSTNAME
+from scripts.mount_img import ImageMounter
+from scripts.resize_fs import resize_filesystem
+import scripts.add_user
+import scripts.set_hostname
+import scripts.enable_ssh
+import scripts.update_upgrade_chroot
+import scripts.install_citrascope
 
 # Latest Raspberry Pi OS Lite (ARM64) download URL
 # Update this URL periodically to point to latest release
@@ -129,10 +129,10 @@ def customize_base_image(image_path, skip_resize=False):
     
     try:
         # Customize the image
-        run_step("Add user", add_user.add_user_to_image)
-        run_step("Set hostname", set_hostname.set_hostname_in_image)
-        run_step("Enable SSH", enable_ssh.enable_ssh_in_image)
-        run_step("Update and install packages", update_upgrade_chroot.update_and_install_packages)
+        run_step("Add user", scripts.add_user.main)
+        run_step("Set hostname", scripts.set_hostname.main)
+        run_step("Enable SSH", scripts.enable_ssh.main)
+        run_step("Update and install packages", scripts.update_upgrade_chroot.main)
         
     finally:
         # Always cleanup
@@ -144,19 +144,17 @@ def install_citrascope_software(image_path):
     # Mount the image
     mounter = ImageMounter(image_path)
     run_step("Setup loop devices", mounter.setup_loop_devices)
-    run_step("Mount partitions", nargs='?', help='Path to Raspberry Pi OS image file (will download if not provided)')
-    parser.add_argument('-o', '--output', help='Output image path (default: adds -citrascope suffix)')
-    parser.add_argument('--download', action='store_true',
-                        help='Download latest Raspberry Pi OS Lite image
+    run_step("Mount partitions", mounter.mount_partitions)
+    
     try:
         # Install Citrascope
-        run_step("Install Citrascope", install_citrascope.install_citrascope_in_image)
+        run_step("Install Citrascope", scripts.install_citrascope.main)
         
         # Install AP setup script
         import os
         os.chdir(SCRIPTS_DIR)
-        from install_citrascope_ap_setup import install_ap_setup
-        from config import ROOTFS_MOUNT
+        from scripts.install_citrascope_ap_setup import install_ap_setup
+        from scripts.config import ROOTFS_MOUNT
         run_step("Install WiFi AP setup", install_ap_setup, ROOTFS_MOUNT)
         
     finally:
@@ -231,32 +229,26 @@ Examples:
     
     # Check if running as root
     if subprocess.run(['id', '-u'], capture_output=True, text=True).stdout.strip() != '0':
-        print("Error: This script must be run as root (use sudo)")
-      Handle download request or missing image
-    if args.download or not args.image:
-        image_path = download_raspios()
-        if not args.image:
-            args.image = image_path
+        print("Error: This script must be run as root (use sudo)", flush=True)
+        sys.exit(1)
     
     # Check if image exists
     if not Path(args.image).exists():
-        print(f"Error: Image file not found: {args.image}")
-        print("\nOptions:")
-        print("  1. Download automatically: sudo ./build_image.py --download")
-        print("  2. Specify an existing image: sudo ./build_image.py /path/to/image.img
-    if not Path\n>>> Mode: Customize base image only\n", flush=True)
+        print(f"Error: Image file not found: {args.image}", flush=True)
+        print("\nOptions:", flush=True)
+        print("  1. Download automatically: sudo ./build_image.py --download", flush=True)
+        print("  2. Specify an existing image: sudo ./build_image.py /path/to/image.img", flush=True)
+        sys.exit(1)
+    
+    # Run appropriate build steps
+    if args.customize_only:
+        print("\n>>> Mode: Customize base image only\n", flush=True)
         customize_base_image(args.image, skip_resize=args.skip_resize)
     elif args.citrascope_only:
         print("\n>>> Mode: Install Citrascope only\n", flush=True)
         install_citrascope_software(args.image)
     else:
-        print("\n>>> Mode: Complete build\n", flush=Trueimage only")
-        customize_base_image(args.image, skip_resize=args.skip_resize)
-    elif args.citrascope_only:
-        print("Mode: Install Citrascope only")
-        install_citrascope_software(args.image)
-    else:
-        print("Mode: Complete build")
+        print("\n>>> Mode: Complete build\n", flush=True)
         build_complete_image(args.image, args.output, skip_resize=args.skip_resize)
 
 if __name__ == '__main__':
