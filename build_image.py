@@ -33,6 +33,20 @@ import scripts.set_hostname
 import scripts.enable_ssh
 import scripts.update_upgrade_chroot
 import scripts.install_citrascope
+import scripts.install_citrascope_ap_setup
+
+# Build step definitions
+CUSTOMIZE_STEPS = [
+    ("Add user", scripts.add_user.main),
+    ("Set hostname", scripts.set_hostname.main),
+    ("Enable SSH", scripts.enable_ssh.main),
+    ("Update packages", scripts.update_upgrade_chroot.main),
+]
+
+CITRASCOPE_STEPS = [
+    ("Install Citrascope", scripts.install_citrascope.main),
+    ("Install WiFi AP setup", scripts.install_citrascope_ap_setup.main),
+]
 
 # Latest Raspberry Pi OS Lite (ARM64) download URL
 # Update this URL periodically to point to latest release
@@ -119,61 +133,22 @@ def customize_base_image(image_path, skip_resize=False):
     """Customize the base Raspberry Pi OS image"""
     
     if not skip_resize:
-        # Resize image to have room for packages
         run_step("Resize image filesystem", resize_filesystem, image_path, 3500)
     
-    # Mount the image
-    mounter = ImageMounter(image_path)
-    run_step("Setup loop devices", mounter.setup_loop_devices)
-    run_step("Mount partitions", mounter.mount_partitions)
-    
-    try:
-        # Customize the image
-        run_step("Add user", scripts.add_user.main)
-        run_step("Set hostname", scripts.set_hostname.main)
-        run_step("Enable SSH", scripts.enable_ssh.main)
-        run_step("Update and install packages", scripts.update_upgrade_chroot.main)
-        
-    finally:
-        # Always cleanup
-        run_step("Unmount image", mounter.cleanup)
+    with ImageMounter(image_path):
+        for name, func in CUSTOMIZE_STEPS:
+            run_step(name, func)
 
 def install_citrascope_software(image_path):
     """Install Citrascope and WiFi AP setup"""
     
-    # Mount the image
-    mounter = ImageMounter(image_path)
-    run_step("Setup loop devices", mounter.setup_loop_devices)
-    run_step("Mount partitions", mounter.mount_partitions)
-    
-    try:
-        # Install Citrascope
-        run_step("Install Citrascope", scripts.install_citrascope.main)
-        
-        # Install AP setup script
-        import os
-        os.chdir(SCRIPTS_DIR)
-        from scripts.install_citrascope_ap_setup import install_ap_setup
-        from scripts.config import ROOTFS_MOUNT
-        run_step("Install WiFi AP setup", install_ap_setup, ROOTFS_MOUNT)
-        
-    finally:
-        # Always cleanup
-        run_step("Unmount image", mounter.cleanup)
+    with ImageMounter(image_path):
+        for name, func in CITRASCOPE_STEPS:
+            run_step(name, func)
 
-def build_complete_image(base_image_path, output_path=None, skip_resize=False):
+def build_complete_image(base_image_path, output_path, skip_resize=False):
     """Build a complete Citrascope image from base Raspberry Pi OS"""
-    
-    print(f"\n{'#'*60}", flush=True)
-    print(f"# LEMON PI IMAGE BUILDER", flush=True)
-    print(f"{'#'*60}\n", flush=True)
-    
-    # Create output path if not specified
-    if output_path is None:
-        base_name = Path(base_image_path).stem
-        output_path = Path(base_image_path).parent / f"{base_name}-{HOSTNAME}.img"
-    else:
-        output_path = Path(output_path)
+    output_path = Path(output_path)
     
     # Copy base image to output
     print(f"Source: {base_image_path}", flush=True)

@@ -12,6 +12,17 @@ class ImageMounter:
         self.image_path = image_path
         self.loop_devices = []
         self.mount_points = [BOOT_MOUNT, ROOTFS_MOUNT]
+    
+    def __enter__(self):
+        """Context manager entry - setup and mount"""
+        self.setup_loop_devices()
+        self.mount_partitions(readonly=False)
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - cleanup"""
+        self.cleanup()
+        return False  # Don't suppress exceptions
 
     def setup_loop_devices(self):
         """Run kpartx and capture the loop device names"""

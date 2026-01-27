@@ -21,7 +21,7 @@ def install_ap_setup(root_mount):
 
     # Copy the AP setup script and config.py
     script_name = f'{HOSTNAME}-ap-setup.py'
-    shutil.copy2('citrascope-ap-setup.py', sbin_path / script_name)
+    shutil.copy2('citrascope_ap_setup.py', sbin_path / script_name)
     shutil.copy2('config.py', sbin_path / 'config.py')  # Copy config for runtime use
 
     # Ensure script is executable
@@ -59,6 +59,7 @@ WantedBy=multi-user.target
     print(f"Installed and enabled {service_name}")
 
 def main():
+    """Install AP setup scripts into image"""
     try:
         # Change to scripts directory
         import os
