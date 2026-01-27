@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Raspberry Pi Images (large files)
+*.img
+*.img.xz
+*.img.gz
+*.img.zip
+*-citrascope.img
+*-customized.img
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.broken
+*.backup
+
+# Mount points (just in case)
+/mnt/
+
+# Test files
+test_*.img
+scratch/
