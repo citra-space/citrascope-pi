@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     file \
     sudo \
+    parted \
+    e2fsprogs \
     && rm -rf /var/lib/apt/lists/*
 
 # Create user to match host UID/GID (will be set at runtime)

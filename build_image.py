@@ -120,6 +120,10 @@ def run_step(name, func, *args, **kwargs):
     print(f"{'='*60}", flush=True)
     try:
         result = func(*args, **kwargs)
+        # Check if function returned False (failure)
+        if result is False:
+            print(f"✗ {name} failed", flush=True)
+            sys.exit(1)
         print(f"✓ {name} completed successfully", flush=True)
         return result
     except Exception as e:
@@ -163,31 +167,64 @@ def build_complete_image(base_image_path, output_path):
     shutil.copy2(base_image_path, output_path)
     print(f"✓ Image copied\n", flush=True)
     
+    # Expand image to have room for packages (add 2GB)
+    print(f"Expanding image to accommodate packages...", flush=True)
+    current_size = output_path.stat().st_size
+    additional_space = 2 * 1024 * 1024 * 1024  # 2GB
+    new_size = current_size + additional_space
+    
+    # Truncate extends the file
+    with open(output_path, 'ab') as f:
+        f.truncate(new_size)
+    
+    # Expand the root partition to use the new space
+    try:
+        # Use parted to resize partition
+        subprocess.run(['sudo', 'parted', str(output_path), 'resizepart', '2', '100%'], 
+                      check=True, capture_output=True)
+        
+        # Now resize the filesystem using e2fsck and resize2fs
+        # First, setup loop device to access partition
+        result = subprocess.run(['sudo', 'kpartx', '-av', str(output_path)],
+                               capture_output=True, text=True, check=True)
+        
+        # Extract loop device name (e.g., loop0p2)
+        import re
+        loop_devs = []
+        for line in result.stdout.split('\n'):
+            match = re.search(r'add map (\S+)', line)
+            if match:
+                loop_devs.append(match.group(1))
+        
+        if len(loop_devs) >= 2:
+            rootfs_dev = f"/dev/mapper/{loop_devs[1]}"
+            
+            # Check and resize filesystem
+            subprocess.run(['sudo', 'e2fsck', '-f', '-y', rootfs_dev], 
+                          capture_output=True)
+            subprocess.run(['sudo', 'resize2fs', rootfs_dev], 
+                          check=True, capture_output=True)
+            
+            # Clean up loop devices
+            subprocess.run(['sudo', 'kpartx', '-d', str(output_path)], 
+                          capture_output=True)
+            
+        print(f"✓ Image expanded by {additional_space // (1024*1024*1024)}GB\n", flush=True)
+    except Exception as e:
+        print(f"Warning: Could not resize filesystem: {e}", flush=True)
+        print(f"Filesystem will auto-expand on first boot\n", flush=True)
+    
     # Customize base image
     print(f"{'='*60}", flush=True)
     print(f"Customizing base image...", flush=True)
     print(f"{'='*60}\n", flush=True)
-    try:
-        customize_base_image(str(output_path))
-        print(f"\n✓ Base image customization complete\n", flush=True)
-    except Exception as e:
-        print(f"\n✗ Base image customization failed: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        raise
+    customize_base_image(str(output_path))
     
     # Install Citrascope
     print(f"\n{'='*60}", flush=True)
     print(f"Installing Citrascope software...", flush=True)
     print(f"{'='*60}\n", flush=True)
-    try:
-        install_citrascope_software(str(output_path))
-        print(f"\n✓ Citrascope installation complete\n", flush=True)
-    except Exception as e:
-        print(f"\n✗ Citrascope installation failed: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
-        raise
+    install_citrascope_software(str(output_path))
     
     print(f"\n{'='*60}")
     print(f"✓ BUILD COMPLETE")
