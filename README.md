@@ -12,11 +12,8 @@ Creates a turnkey SD card image with Citrascope telescope control software, INDI
 # Install dependencies (Ubuntu/Debian)
 sudo apt-get install kpartx python3 qemu-user-static
 
-# Download Raspberry Pi OS Lite (64-bit) from raspberrypi.com
-# Extract: xz -d raspios-bookworm-arm64-lite.img.xz
-
-# Build image
-sudo ./build_image.py raspios-bookworm-arm64-lite.img
+# Build image (auto-downloads Raspberry Pi OS)
+sudo ./build_image.py
 
 # Flash to SD card
 sudo dd if=raspios-bookworm-arm64-lite-citrascope.img of=/dev/sdX bs=4M status=progress
@@ -56,14 +53,17 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 ## Advanced Usage
 
 ```bash
+# Use existing image file
+sudo ./build_image.py path/to/raspios.img
+
 # Custom output name
-sudo ./build_image.py base.img -o custom-name.img
+sudo ./build_image.py -o custom-name.img
 
 # Only customize base (skip Citrascope)
-sudo ./build_image.py base.img --customize-only
+sudo ./build_image.py existing.img --customize-only
 
 # Only install Citrascope (assumes customized)
-sudo ./build_image.py custom.img --citrascope-only
+sudo ./build_image.py customized.img --citrascope-only
 ```
 
 ## Supported Hardware

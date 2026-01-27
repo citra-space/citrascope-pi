@@ -27,7 +27,6 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 # Now import from scripts directory
 from scripts.config import HOSTNAME
 from scripts.mount_img import ImageMounter
-from scripts.resize_fs import resize_filesystem
 import scripts.add_user
 import scripts.set_hostname
 import scripts.enable_ssh
@@ -49,8 +48,8 @@ CITRASCOPE_STEPS = [
 ]
 
 # Latest Raspberry Pi OS Lite (ARM64) download URL
-# Update this URL periodically to point to latest release
-RASPIOS_URL = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-11-19/2024-11-19-raspios-bookworm-arm64-lite.img.xz"
+# Check https://www.raspberrypi.com/software/operating-systems/ for current version
+RASPIOS_URL = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2025-12-04/2025-12-04-raspios-trixie-arm64-lite.img.xz"
 
 def download_raspios(output_dir="."):
     """Download and extract the latest Raspberry Pi OS Lite image"""
@@ -129,11 +128,8 @@ def run_step(name, func, *args, **kwargs):
         traceback.print_exc()
         sys.exit(1)
 
-def customize_base_image(image_path, skip_resize=False):
+def customize_base_image(image_path):
     """Customize the base Raspberry Pi OS image"""
-    
-    if not skip_resize:
-        run_step("Resize image filesystem", resize_filesystem, image_path, 3500)
     
     with ImageMounter(image_path):
         for name, func in CUSTOMIZE_STEPS:
@@ -146,9 +142,14 @@ def install_citrascope_software(image_path):
         for name, func in CITRASCOPE_STEPS:
             run_step(name, func)
 
-def build_complete_image(base_image_path, output_path, skip_resize=False):
+def build_complete_image(base_image_path, output_path):
     """Build a complete Citrascope image from base Raspberry Pi OS"""
-    output_path = Path(output_path)
+    # Generate default output path if not provided
+    if output_path is None:
+        base_path = Path(base_image_path)
+        output_path = base_path.parent / f"{base_path.stem}-citrascope{base_path.suffix}"
+    else:
+        output_path = Path(output_path)
     
     # Copy base image to output
     print(f"Source: {base_image_path}", flush=True)
@@ -158,7 +159,7 @@ def build_complete_image(base_image_path, output_path, skip_resize=False):
     print(f"✓ Image copied\n", flush=True)
     
     # Customize base image
-    customize_base_image(str(output_path), skip_resize=skip_resize)
+    customize_base_image(str(output_path))
     
     # Install Citrascope
     install_citrascope_software(str(output_path))
@@ -177,28 +178,29 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Build complete image from base Raspberry Pi OS
+  # Build complete image (auto-downloads if needed)
+  sudo ./build_image.py
+
+  # Build from existing image
   sudo ./build_image.py raspios-bookworm-arm64-lite.img
 
   # Build with custom output name
-  sudo ./build_image.py base.img -o citrascope-v1.0.img
+  sudo ./build_image.py -o citrascope-v1.0.img
   
   # Only customize base (no Citrascope)
-  sudo ./build_image.py base.img --customize-only
+  sudo ./build_image.py existing.img --customize-only
   
   # Only install Citrascope (assumes already customized)
   sudo ./build_image.py customized.img --citrascope-only
         """
     )
     
-    parser.add_argument('image', help='Path to Raspberry Pi OS image file')
+    parser.add_argument('image', nargs='?', help='Path to Raspberry Pi OS image file (auto-downloads if not provided)')
     parser.add_argument('-o', '--output', help='Output image path (default: adds -citrascope suffix)')
     parser.add_argument('--customize-only', action='store_true', 
                         help='Only customize base image (skip Citrascope installation)')
     parser.add_argument('--citrascope-only', action='store_true',
                         help='Only install Citrascope (assumes image already customized)')
-    parser.add_argument('--skip-resize', action='store_true',
-                        help='Skip image resize step (use if already resized)')
     
     args = parser.parse_args()
     
@@ -207,24 +209,24 @@ Examples:
         print("Error: This script must be run as root (use sudo)", flush=True)
         sys.exit(1)
     
-    # Check if image exists
-    if not Path(args.image).exists():
-        print(f"Error: Image file not found: {args.image}", flush=True)
-        print("\nOptions:", flush=True)
-        print("  1. Download automatically: sudo ./build_image.py --download", flush=True)
-        print("  2. Specify an existing image: sudo ./build_image.py /path/to/image.img", flush=True)
-        sys.exit(1)
+    # Handle image path - download if not provided or doesn't exist
+    image_path = args.image
+    if not image_path or not Path(image_path).exists():
+        if image_path:
+            print(f"Image file not found: {image_path}", flush=True)
+        print("Downloading Raspberry Pi OS Lite (ARM64)...", flush=True)
+        image_path = download_raspios()
     
     # Run appropriate build steps
     if args.customize_only:
         print("\n>>> Mode: Customize base image only\n", flush=True)
-        customize_base_image(args.image, skip_resize=args.skip_resize)
+        customize_base_image(image_path)
     elif args.citrascope_only:
         print("\n>>> Mode: Install Citrascope only\n", flush=True)
-        install_citrascope_software(args.image)
+        install_citrascope_software(image_path)
     else:
         print("\n>>> Mode: Complete build\n", flush=True)
-        build_complete_image(args.image, args.output, skip_resize=args.skip_resize)
+        build_complete_image(image_path, args.output)
 
 if __name__ == '__main__':
     main()
