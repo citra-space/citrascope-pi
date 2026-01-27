@@ -5,8 +5,6 @@ import crypt
 import shutil
 from config import USERNAME, PASSWORD, USER_UID, USER_GID, USER_GROUPS, ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 def generate_password_hash(password):
     """Generate SHA-512 password hash."""
     return crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512))

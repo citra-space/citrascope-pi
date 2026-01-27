@@ -12,8 +12,6 @@ import subprocess
 import re
 from config import HOSTNAME, ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 def set_hostname(rootfs_path, hostname="citrascope"):
     """
     Set the hostname in the mounted Raspberry Pi image

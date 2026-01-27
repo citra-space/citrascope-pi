@@ -120,7 +120,3 @@ lemon-pi/
 ## License
 
 MIT License. Built on open-source tools following their respective licenses.
-
----
-
-Modeled on [cedar-server's image builder](https://github.com/smroid/cedar-server/tree/main/create_cedar_image).

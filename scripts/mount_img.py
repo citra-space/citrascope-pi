@@ -5,8 +5,6 @@ import re
 import sys
 from config import BOOT_MOUNT, ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 class ImageMounter:
     def __init__(self, image_path):
         self.image_path = image_path

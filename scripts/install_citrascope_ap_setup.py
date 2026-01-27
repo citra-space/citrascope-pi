@@ -8,8 +8,6 @@ import shutil
 import sys
 from config import HOSTNAME, ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 def install_ap_setup(root_mount):
     """Install AP setup script and systemd services"""
     

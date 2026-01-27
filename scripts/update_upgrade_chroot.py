@@ -5,8 +5,6 @@ import subprocess
 from contextlib import contextmanager
 from config import SYSTEM_PACKAGES, ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 @contextmanager
 def mount_context(rootfs_path):
     """Context manager to handle mounting and unmounting of necessary filesystems"""

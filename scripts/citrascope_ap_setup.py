@@ -23,8 +23,6 @@ except ImportError:
     AP_CHANNEL = 6
     HOSTNAME = "citrascope"
 
-# Adapted from cedar-server create_cedar_image scripts
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',

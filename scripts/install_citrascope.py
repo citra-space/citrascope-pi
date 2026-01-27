@@ -10,8 +10,6 @@ import subprocess
 from contextlib import contextmanager
 from config import USERNAME, CITRASCOPE_VENV_PATH, ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 @contextmanager
 def mount_context(rootfs_path):
     """Context manager to handle mounting and unmounting of necessary filesystems"""

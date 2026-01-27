@@ -6,8 +6,6 @@ import sys
 import time
 from contextlib import contextmanager
 
-# Adapted from cedar-server create_cedar_image scripts
-
 class DeviceManager:
     def __init__(self, image_path):
         self.image_path = image_path

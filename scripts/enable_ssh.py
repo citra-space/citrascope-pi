@@ -3,8 +3,6 @@ import os
 import sys
 from config import ROOTFS_MOUNT
 
-# Adapted from cedar-server create_cedar_image scripts
-
 def enable_ssh_service(rootfs_path):
     """
     Enable SSH service in root filesystem
