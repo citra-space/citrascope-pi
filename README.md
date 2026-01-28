@@ -6,33 +6,16 @@ Creates a turnkey SD card image with Citrascope telescope control software, INDI
 
 ## Quick Start
 
-### Building on Linux
-
-**Requirements:** Linux machine with Python 3.10+, kpartx, qemu-user-static
+**Requirements:** Docker Desktop (Mac/Windows/Linux)
 
 ```bash
-# Install dependencies (Ubuntu/Debian)
-sudo apt-get install kpartx python3 qemu-user-static
-
-# Build image (auto-downloads Raspberry Pi OS)
-sudo ./build_image.py
-
-# Flash to SD card
-sudo dd if=2025-12-04-raspios-trixie-arm64-lite-citrascope.img of=/dev/sdX bs=4M status=progress
-```
-
-### Building on Mac/Windows (Docker)
-
-**Requirements:** Docker Desktop
-
-```bash
-# Build image using Docker
+# Build image using Docker (auto-downloads Raspberry Pi OS)
 ./build-docker.sh
 
-# Flash to SD card (use Raspberry Pi Imager or Balena Etcher)
+# Flash to SD card using Raspberry Pi Imager or Balena Etcher
 ```
 
-**Note on Docker Security:** The build requires `--privileged` mode to access loop devices (needed for mounting disk images). The container runs as your user (not root) to avoid permission issues. This is standard practice for disk image manipulation in containers.
+**Note on Docker:** The build requires `--privileged` mode to access loop devices needed for mounting disk images. The container runs as your user (not root) to avoid permission issues. All dependencies (kpartx, qemu, Python) are handled inside the container—no manual installation required.
 
 **Build time:** 15-30 minutes. **Final image:** ~3-4GB.
 
@@ -69,16 +52,16 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 
 ```bash
 # Use existing image file
-sudo ./build_image.py path/to/raspios.img
+./build-docker.sh path/to/raspios.img
 
 # Custom output name
-sudo ./build_image.py -o custom-name.img
+./build-docker.sh -o custom-name.img
 
 # Only customize base (skip Citrascope)
-sudo ./build_image.py existing.img --customize-only
+./build-docker.sh existing.img --customize-only
 
 # Only install Citrascope (assumes customized)
-sudo ./build_image.py customized.img --citrascope-only
+./build-docker.sh customized.img --citrascope-only
 ```
 
 ## Supported Hardware
@@ -98,10 +81,10 @@ ssh citra@<pi-ip>
 
 ## How It Works
 
-The build process:
+The build process runs entirely in Docker:
 
 1. **Downloads** Raspberry Pi OS Lite (Trixie ARM64, Debian 13)
-2. **Mounts** the image using loop devices (kpartx)
+2. **Mounts** the image using loop devices (kpartx inside container)
 3. **Customizes** via direct file operations and chroot:
    - Creates `citra` user with sudo access
    - Sets hostname to `citrascope`
@@ -111,7 +94,7 @@ The build process:
 5. **Configures** WiFi AP fallback for field use
 6. **Unmounts** and outputs ready-to-flash image
 
-All modifications happen on your build machine - the Pi receives a complete, pre-configured image.
+All modifications happen in the Docker container on your machine—the Pi receives a complete, pre-configured image.
 
 ## Resources
 
