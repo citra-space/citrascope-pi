@@ -113,24 +113,92 @@ def download_raspios(output_dir="."):
         print(f"\n✗ Extraction failed: {e}")
         sys.exit(1)
 
+# Global list to track all build steps
+BUILD_STEPS = []
+
 def run_step(name, func, *args, **kwargs):
-    """Run a build step with error handling"""
+    """Run a build step with error handling and timing"""
+    import time
+    
     print(f"\n{'='*60}", flush=True)
     print(f"STEP: {name}", flush=True)
     print(f"{'='*60}", flush=True)
+    
+    start_time = time.time()
+    step_result = {'name': name, 'success': False, 'elapsed': 0}
+    
     try:
         result = func(*args, **kwargs)
+        elapsed = time.time() - start_time
+        step_result['elapsed'] = elapsed
+        
         # Check if function returned False (failure)
         if result is False:
-            print(f"✗ {name} failed", flush=True)
+            print(f"✗ {name} failed (took {elapsed:.1f}s)", flush=True)
+            BUILD_STEPS.append(step_result)
             sys.exit(1)
-        print(f"✓ {name} completed successfully", flush=True)
+        
+        step_result['success'] = True
+        BUILD_STEPS.append(step_result)
+        
+        minutes, seconds = divmod(int(elapsed), 60)
+        if minutes > 0:
+            time_str = f"{minutes}m {seconds}s"
+        else:
+            time_str = f"{elapsed:.1f}s"
+        print(f"✓ {name} completed successfully (took {time_str})", flush=True)
         return result
     except Exception as e:
-        print(f"✗ {name} failed: {e}", flush=True)
+        elapsed = time.time() - start_time
+        step_result['elapsed'] = elapsed
+        BUILD_STEPS.append(step_result)
+        
+        print(f"✗ {name} failed after {elapsed:.1f}s: {e}", flush=True)
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+def print_build_summary():
+    """Print a summary of all build steps"""
+    if not BUILD_STEPS:
+        return
+    
+    print(f"\n{'='*60}", flush=True)
+    print("BUILD SUMMARY", flush=True)
+    print(f"{'='*60}", flush=True)
+    
+    # Calculate column widths
+    max_name_len = max(len(step['name']) for step in BUILD_STEPS)
+    col_width = max(max_name_len, 20)
+    
+    # Print header
+    print(f"\n{'Step':<{col_width}}  {'Status':<10}  {'Time'}", flush=True)
+    print(f"{'-'*col_width}  {'-'*10}  {'-'*15}", flush=True)
+    
+    # Print each step
+    total_time = 0
+    for step in BUILD_STEPS:
+        status = "✓ SUCCESS" if step['success'] else "✗ FAILED"
+        elapsed = step['elapsed']
+        total_time += elapsed
+        
+        minutes, seconds = divmod(int(elapsed), 60)
+        if minutes > 0:
+            time_str = f"{minutes}m {seconds}s"
+        else:
+            time_str = f"{elapsed:.1f}s"
+        
+        print(f"{step['name']:<{col_width}}  {status:<10}  {time_str}", flush=True)
+    
+    # Print total
+    print(f"{'-'*col_width}  {'-'*10}  {'-'*15}", flush=True)
+    total_minutes, total_seconds = divmod(int(total_time), 60)
+    if total_minutes > 0:
+        total_time_str = f"{total_minutes}m {total_seconds}s"
+    else:
+        total_time_str = f"{total_time:.1f}s"
+    print(f"{'Total':<{col_width}}             {total_time_str}", flush=True)
+    print(f"{'='*60}\n", flush=True)
 
 def customize_base_image(image_path):
     """Customize the base Raspberry Pi OS image"""
@@ -233,6 +301,9 @@ def build_complete_image(base_image_path, output_path):
     print(f"Flash to SD card with:")
     print(f"  sudo dd if={output_path} of=/dev/sdX bs=4M status=progress")
     print(f"\nOr use Raspberry Pi Imager.")
+    
+    # Print summary of all steps
+    print_build_summary()
 
 def main():
     parser = argparse.ArgumentParser(
@@ -266,29 +337,44 @@ Examples:
     
     args = parser.parse_args()
     
-    # Check if running as root
-    if subprocess.run(['id', '-u'], capture_output=True, text=True).stdout.strip() != '0':
-        print("Error: This script must be run as root (use sudo)", flush=True)
+    try:
+        # Check if running as root
+        if subprocess.run(['id', '-u'], capture_output=True, text=True).stdout.strip() != '0':
+            print("Error: This script must be run as root (use sudo)", flush=True)
+            sys.exit(1)
+        
+        # Handle image path - download if not provided or doesn't exist
+        image_path = args.image
+        if not image_path or not Path(image_path).exists():
+            if image_path:
+                print(f"Image file not found: {image_path}", flush=True)
+            print("Downloading Raspberry Pi OS Lite (ARM64)...", flush=True)
+            image_path = download_raspios()
+        
+        # Run appropriate build steps
+        if args.customize_only:
+            print("\n>>> Mode: Customize base image only\n", flush=True)
+            customize_base_image(image_path)
+            print_build_summary()
+        elif args.citrascope_only:
+            print("\n>>> Mode: Install Citrascope only\n", flush=True)
+            install_citrascope_software(image_path)
+            print_build_summary()
+        else:
+            print("\n>>> Mode: Complete build\n", flush=True)
+            build_complete_image(image_path, args.output)
+    
+    except SystemExit:
+        # Print summary even on failure
+        print_build_summary()
+        raise
+    except Exception as e:
+        # Print summary on unexpected errors
+        print(f"\nUnexpected error: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        print_build_summary()
         sys.exit(1)
-    
-    # Handle image path - download if not provided or doesn't exist
-    image_path = args.image
-    if not image_path or not Path(image_path).exists():
-        if image_path:
-            print(f"Image file not found: {image_path}", flush=True)
-        print("Downloading Raspberry Pi OS Lite (ARM64)...", flush=True)
-        image_path = download_raspios()
-    
-    # Run appropriate build steps
-    if args.customize_only:
-        print("\n>>> Mode: Customize base image only\n", flush=True)
-        customize_base_image(image_path)
-    elif args.citrascope_only:
-        print("\n>>> Mode: Install Citrascope only\n", flush=True)
-        install_citrascope_software(image_path)
-    else:
-        print("\n>>> Mode: Complete build\n", flush=True)
-        build_complete_image(image_path, args.output)
 
 if __name__ == '__main__':
     main()

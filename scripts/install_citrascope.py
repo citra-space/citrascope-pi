@@ -8,7 +8,7 @@ import os
 import sys
 import subprocess
 from contextlib import contextmanager
-from config import USERNAME, CITRASCOPE_VENV_PATH, ROOTFS_MOUNT
+from config import USERNAME, CITRASCOPE_VENV_PATH, ROOTFS_MOUNT, USER_UID, USER_GID
 
 @contextmanager
 def mount_context(rootfs_path):
@@ -42,13 +42,36 @@ def mount_context(rootfs_path):
 def install_citrascope(rootfs_path, homedir):
     """Install Citrascope and configure it to run on boot"""
     
+    print("Installing pyenv and Python 3.12...")
+    with mount_context(rootfs_path):
+        # Install pyenv for the citra user
+        pyenv_root = os.path.join(homedir, '.pyenv')
+        subprocess.run([
+            'chroot', rootfs_path, 'su', '-', USERNAME, '-c',
+            'curl https://pyenv.run | bash'
+        ], check=True)
+        
+        # Add pyenv to shell profile
+        bashrc_path = os.path.join(homedir, '.bashrc')
+        with open(bashrc_path, 'a') as f:
+            f.write('\n# pyenv configuration\n')
+            f.write('export PYENV_ROOT="$HOME/.pyenv"\n')
+            f.write('export PATH="$PYENV_ROOT/bin:$PATH"\n')
+            f.write('eval "$(pyenv init -)"\n')
+        
+        # Install Python 3.12 using pyenv
+        subprocess.run(
+            f"chroot {rootfs_path} su - {USERNAME} -c 'bash -c \"export PYENV_ROOT=\\$HOME/.pyenv && export PATH=\\$PYENV_ROOT/bin:\\$PATH && pyenv install 3.12.0 && pyenv global 3.12.0\"'",
+            check=True, shell=True
+        )
+    
     print("Creating Citrascope virtual environment...")
     with mount_context(rootfs_path):
-        # Create virtual environment
-        subprocess.run([
-            'chroot', rootfs_path,
-            'python3', '-m', 'venv', CITRASCOPE_VENV_PATH
-        ], check=True)
+        # Create virtual environment using pyenv's Python 3.12 directly
+        subprocess.run(
+            f"chroot {rootfs_path} su - {USERNAME} -c 'bash -c \"/home/{USERNAME}/.pyenv/versions/3.12.0/bin/python3 -m venv {CITRASCOPE_VENV_PATH}\"'",
+            check=True, shell=True
+        )
         
         print("Installing Citrascope with INDI support...")
         
@@ -99,16 +122,15 @@ def set_permissions(rootfs_path, homedir):
     """Set correct ownership for user files"""
     print("Setting file ownership...")
     
-    # Change ownership of home directory
-    for root, dirs, files in os.walk(homedir):
-        for d in dirs:
-            os.chown(os.path.join(root, d), 1001, 1001)
-        for f in files:
-            os.chown(os.path.join(root, f), 1001, 1001)
-    
-    os.chown(homedir, 1001, 1001)
-    
-    print("File ownership set")
+    # Change ownership of home directory recursively
+    # Use chown -R to handle symlinks and special files properly
+    try:
+        subprocess.run(['chown', '-R', f'{USER_UID}:{USER_GID}', homedir], check=True)
+        print("File ownership set")
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Some files could not have ownership changed: {e}")
+        # Still return success as this is not critical
+        print("File ownership partially set")
 
 def main():
     HOMEDIR = os.path.join(ROOTFS_MOUNT, f"home/{USERNAME}")

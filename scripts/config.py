@@ -38,6 +38,30 @@ SYSTEM_PACKAGES = [
     'avahi-daemon',
     'avahi-utils',
     'indi-bin',  # INDI server for telescope/camera control
+    'curl',
+    'git',
+    # Build dependencies for pyenv to compile Python 3.12
+    'libssl-dev',
+    'zlib1g-dev',
+    'libbz2-dev',
+    'libreadline-dev',
+    'libsqlite3-dev',
+    'libncurses5-dev',
+    'libncursesw5-dev',
+    'libffi-dev',
+    'liblzma-dev',
+    'tk-dev',
+    'xz-utils',
+    # Build dependencies for Python packages
+    'libdbus-1-dev',  # Needed for dbus-python
+    'libglib2.0-dev',  # Needed for dbus-gmain
+    'libjpeg-dev',  # Needed for Pillow
+    'zlib1g-dev',  # Already listed above but also needed for Pillow
+    'liblcms2-dev',  # Needed for Pillow color management
+    'libwebp-dev',  # Needed for Pillow WebP support
+    'libharfbuzz-dev',  # Needed for Pillow text rendering
+    'libfribidi-dev',  # Needed for Pillow bidirectional text
+    'libxcb1-dev',  # Needed for Pillow X11 support
 ]
 
 # User Groups (in addition to primary group)
