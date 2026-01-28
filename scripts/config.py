@@ -25,6 +25,12 @@ AP_CHANNEL = 6
 CITRASCOPE_WEB_PORT = 24872
 CITRASCOPE_VENV_PATH = "/home/{}/".format(USERNAME) + ".citrascope_venv"
 
+# Localization Settings
+LOCALE = "en_US.UTF-8"
+TIMEZONE = "America/New_York"
+KEYBOARD_LAYOUT = "us"
+WIFI_COUNTRY = "US"  # Required for WiFi to work (regulatory compliance)
+
 # Mount Points
 ROOTFS_MOUNT = "/mnt/part2"
 BOOT_MOUNT = "/mnt/part1"
@@ -38,6 +44,7 @@ SYSTEM_PACKAGES = [
     'avahi-daemon',
     'avahi-utils',
     'indi-bin',  # INDI server for telescope/camera control
+    'comitup',  # WiFi provisioning with captive portal
     'curl',
     'git',
     # Build dependencies for pyenv to compile Python 3.12

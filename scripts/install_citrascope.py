@@ -103,7 +103,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 """
     
-    service_path = os.path.join(rootfs_path, 'lib/systemd/system/citrascope.service')
+    service_path = os.path.join(rootfs_path, 'etc/systemd/system/citrascope.service')
     with open(service_path, 'w') as f:
         f.write(service_content)
     
@@ -114,7 +114,7 @@ WantedBy=multi-user.target
     os.makedirs(os.path.dirname(service_link), exist_ok=True)
     
     if not os.path.exists(service_link):
-        os.symlink('/lib/systemd/system/citrascope.service', service_link)
+        os.symlink('/etc/systemd/system/citrascope.service', service_link)
     
     print("Enabled citrascope.service")
 

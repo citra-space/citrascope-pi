@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import urllib.request
 import lzma
+from datetime import datetime
 
 # Check Python version
 if sys.version_info < (3, 10):
@@ -30,21 +31,23 @@ from scripts.mount_img import ImageMounter
 import scripts.add_user
 import scripts.set_hostname
 import scripts.enable_ssh
+import scripts.configure_headless
 import scripts.update_upgrade_chroot
 import scripts.install_citrascope
-import scripts.install_citrascope_ap_setup
+import scripts.configure_comitup
 
 # Build step definitions
 CUSTOMIZE_STEPS = [
     ("Add user", scripts.add_user.main),
     ("Set hostname", scripts.set_hostname.main),
     ("Enable SSH", scripts.enable_ssh.main),
+    ("Configure headless settings", scripts.configure_headless.main),
     ("Update packages", scripts.update_upgrade_chroot.main),
 ]
 
 CITRASCOPE_STEPS = [
     ("Install Citrascope", scripts.install_citrascope.main),
-    ("Install WiFi AP setup", scripts.install_citrascope_ap_setup.main),
+    ("Configure Comitup WiFi", scripts.configure_comitup.main),
 ]
 
 # Latest Raspberry Pi OS Lite (ARM64) download URL
@@ -198,7 +201,8 @@ def print_build_summary():
     else:
         total_time_str = f"{total_time:.1f}s"
     print(f"{'Total':<{col_width}}             {total_time_str}", flush=True)
-    print(f"{'='*60}\n", flush=True)
+    print(f"{'='*60}", flush=True)
+    print(f"Build completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", flush=True)
 
 def customize_base_image(image_path):
     """Customize the base Raspberry Pi OS image"""

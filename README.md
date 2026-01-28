@@ -25,10 +25,24 @@ Creates a turnkey SD card image with Citrascope telescope control software, INDI
 - **Hostname:** `citrascope.local` (mDNS enabled)
 - **SSH:** Enabled on port 22
 - **Citrascope:** Auto-starts on boot, web UI at port 24872
-- **WiFi AP:** Auto-creates `citrascope-{serial}` network if no ethernet
+- **WiFi Provisioning:** Captive portal for easy WiFi setup, automatic AP fallback
 - **INDI Server:** Pre-installed for telescope/camera control
 
 ## First Boot
+
+### WiFi Setup (First Time)
+
+On first boot, if not connected via Ethernet:
+
+1. **Pi creates WiFi hotspot:** `citrascope-XXXXXXXX` (where XXXXXXXX is last 8 chars of serial)
+2. **Connect with your phone/laptop** using password: `citrascope`
+3. **Captive portal appears automatically** showing available WiFi networks
+4. **Select your network** and enter password
+5. **Pi connects to your WiFi** and disables the hotspot
+
+**Automatic Fallback:** If your WiFi becomes unavailable (field use, power outage), the Pi automatically re-enables the hotspot so you can always connect.
+
+### After WiFi Setup
 
 **Via Network:**
 ```bash
@@ -36,7 +50,7 @@ ssh citra@citrascope.local
 # Browser: http://citrascope.local:24872
 ```
 
-**Via WiFi AP (if no network):**
+**Via Hotspot (field use when no WiFi):**
 - Connect to WiFi: `citrascope-XXXXXXXX` (password: `citrascope`)
 - Browser: `http://10.42.0.1:24872`
 
@@ -45,7 +59,7 @@ ssh citra@citrascope.local
 Edit [scripts/config.py](scripts/config.py) to customize:
 - Username/password
 - Hostname
-- WiFi AP settings
+- WiFi hotspot password and SSID prefix
 - System packages
 
 ## Advanced Usage
@@ -91,7 +105,7 @@ The build process runs entirely in Docker:
    - Enables SSH
    - Installs system packages (INDI, Python, build tools)
 4. **Installs** Citrascope in Python venv with systemd service
-5. **Configures** WiFi AP fallback for field use
+5. **Configures** Comitup for WiFi provisioning with automatic AP fallback
 6. **Unmounts** and outputs ready-to-flash image
 
 All modifications happen in the Docker container on your machine—the Pi receives a complete, pre-configured image.
