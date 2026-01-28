@@ -1,0 +1,38 @@
+name: Build CitraScope Image
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        USER_ID=$(id -u)
+        GROUP_ID=$(id -g)
+        docker build \
+          --build-arg USER_ID=${USER_ID} \
+          --build-arg GROUP_ID=${GROUP_ID} \
+          -t lemon-pi-builder .
+    
+    - name: Build Pi image
+      run: |
+        docker run --rm --privileged \
+          -v "$(pwd):/workspace" \
+          -v /dev:/dev \
+          lemon-pi-builder \
+          bash -c "sudo python3 build_image.py && sudo chown builder:builder /workspace/*-citrascope.img"
+    
+    - name: Upload image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: citrascope-image
+        path: '*-citrascope.img'
+        retention-days: 7
