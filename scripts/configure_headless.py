@@ -8,7 +8,7 @@ import os
 import sys
 import subprocess
 from pathlib import Path
-from config import LOCALE, TIMEZONE, KEYBOARD_LAYOUT, WIFI_COUNTRY, ROOTFS_MOUNT, BOOT_MOUNT
+from config import LOCALE, TIMEZONE, WIFI_COUNTRY, ROOTFS_MOUNT, BOOT_MOUNT
 
 def configure_locale(rootfs_path):
     """Configure system locale"""
@@ -52,54 +52,6 @@ def configure_locale(rootfs_path):
         return False
     
     return True
-
-def configure_keyboard(rootfs_path):
-    """Configure keyboard layout"""
-    print(f"Configuring keyboard layout: {KEYBOARD_LAYOUT}...")
-    
-    # Create /etc/default/keyboard
-    keyboard_config = f'''XKBLAYOUT="{KEYBOARD_LAYOUT}"
-XKBMODEL="pc105"
-XKBVARIANT=""
-XKBOPTIONS=""
-BACKSPACE="guess"
-'''
-    
-    keyboard_path = Path(rootfs_path) / 'etc/default/keyboard'
-    with open(keyboard_path, 'w') as f:
-        f.write(keyboard_config)
-    
-    # Set debconf selections to prevent prompts
-    debconf_commands = [
-        f'keyboard-configuration keyboard-configuration/layoutcode string {KEYBOARD_LAYOUT}',
-        'keyboard-configuration keyboard-configuration/variantcode string',
-        'keyboard-configuration keyboard-configuration/modelcode string pc105',
-    ]
-    
-    for cmd in debconf_commands:
-        try:
-            subprocess.run(
-                ['chroot', rootfs_path, 'bash', '-c', f'echo "{cmd}" | debconf-set-selections'],
-                check=True, capture_output=True
-            )
-        except subprocess.CalledProcessError:
-            pass  # Continue if debconf fails
-    
-    # Reconfigure keyboard-configuration non-interactively
-    try:
-        env = os.environ.copy()
-        env['DEBIAN_FRONTEND'] = 'noninteractive'
-        subprocess.run(
-            ['chroot', rootfs_path, 'dpkg-reconfigure', '-f', 'noninteractive', 'keyboard-configuration'],
-            check=True, capture_output=True, env=env
-        )
-        print(f"  ✓ Keyboard configured: {KEYBOARD_LAYOUT}")
-    except subprocess.CalledProcessError as e:
-        print(f"  ✗ Failed to configure keyboard: {e}")
-        return False
-    
-    return True
-
 def configure_timezone(rootfs_path):
     """Configure timezone"""
     print(f"Configuring timezone: {TIMEZONE}...")
@@ -149,16 +101,6 @@ def configure_wifi_country(rootfs_path, boot_path):
     
     return True
 
-def create_setup_marker(rootfs_path):
-    """Create marker file to indicate setup is complete"""
-    print("Creating setup completion marker...")
-    
-    marker_path = Path(rootfs_path) / 'etc/rpi-initial-setup'
-    marker_path.touch()
-    
-    print("  ✓ Created /etc/rpi-initial-setup")
-    return True
-
 def remove_wizard(rootfs_path):
     """Remove first-boot wizard and disable userconfig service"""
     print("Disabling first-boot setup...")
@@ -181,6 +123,15 @@ def remove_wizard(rootfs_path):
         userconfig_script.unlink()
         print("  ✓ Removed userconfig script")
     
+    # Enable getty (console login) since userconfig normally triggers this
+    print("Enabling console login...")
+    getty_link = Path(rootfs_path) / 'etc/systemd/system/getty.target.wants/getty@tty1.service'
+    getty_link.parent.mkdir(parents=True, exist_ok=True)
+    if getty_link.exists() or getty_link.is_symlink():
+        getty_link.unlink()
+    getty_link.symlink_to('/usr/lib/systemd/system/getty@.service')
+    print("  ✓ Enabled getty@tty1.service")
+    
     return True
 
 def main():
@@ -198,10 +149,6 @@ def main():
         if not configure_locale(ROOTFS_MOUNT):
             return False
         
-        # Configure keyboard
-        if not configure_keyboard(ROOTFS_MOUNT):
-            return False
-        
         # Configure timezone
         if not configure_timezone(ROOTFS_MOUNT):
             return False
@@ -210,11 +157,7 @@ def main():
         if not configure_wifi_country(ROOTFS_MOUNT, BOOT_MOUNT):
             return False
         
-        # Create setup marker
-        if not create_setup_marker(ROOTFS_MOUNT):
-            return False
-        
-        # Remove wizard
+        # Remove wizard and enable getty
         if not remove_wizard(ROOTFS_MOUNT):
             return False
         

@@ -35,6 +35,7 @@ import scripts.configure_headless
 import scripts.update_upgrade_chroot
 import scripts.install_citrascope
 import scripts.configure_comitup
+import scripts.enable_wifi
 
 # Build step definitions
 CUSTOMIZE_STEPS = [
@@ -48,6 +49,7 @@ CUSTOMIZE_STEPS = [
 CITRASCOPE_STEPS = [
     ("Install Citrascope", scripts.install_citrascope.main),
     ("Configure Comitup WiFi", scripts.configure_comitup.main),
+    ("Enable WiFi hardware", scripts.enable_wifi.main),
 ]
 
 # Latest Raspberry Pi OS Lite (ARM64) download URL
@@ -202,7 +204,7 @@ def print_build_summary():
         total_time_str = f"{total_time:.1f}s"
     print(f"{'Total':<{col_width}}             {total_time_str}", flush=True)
     print(f"{'='*60}", flush=True)
-    print(f"Build completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", flush=True)
+    print(f"Build completed: {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}\n", flush=True)
 
 def customize_base_image(image_path):
     """Customize the base Raspberry Pi OS image"""

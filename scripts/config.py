@@ -15,11 +15,8 @@ HOSTNAME = "citrascope"
 MDNS_DOMAIN = f"{HOSTNAME}.local"
 
 # WiFi Access Point Configuration
-WIFI_AP_PASSWORD = "citrascope"
+WIFI_AP_PASSWORD = "citra"
 WIFI_AP_SSID_PREFIX = HOSTNAME  # Will be: citrascope-{serial}
-AP_NETWORK = "10.42.0.0/24"
-AP_GATEWAY = "10.42.0.1"
-AP_CHANNEL = 6
 
 # Citrascope Configuration
 CITRASCOPE_WEB_PORT = 24872
