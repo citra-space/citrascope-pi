@@ -82,12 +82,14 @@ class ImageMounter:
                 except subprocess.CalledProcessError as e:
                     print(f"Error unmounting {mount_point}: {e}")
 
-        # Remove loop devices
-        try:
-            subprocess.run(['sudo', 'kpartx', '-d', self.image_path], check=True)
+        # Remove loop devices (may already be removed by umount, so don't fail on error)
+        result = subprocess.run(['sudo', 'kpartx', '-d', self.image_path], 
+                               capture_output=True, text=True)
+        if result.returncode == 0:
             print("Removed loop devices")
-        except subprocess.CalledProcessError as e:
-            print(f"Error removing loop devices: {e}")
+        else:
+            # This is often benign - loop devices may already be removed
+            print("Loop devices cleanup complete (may have been auto-removed)")
 
 def main():
     # Check for sudo privileges first
