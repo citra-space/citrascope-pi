@@ -1,12 +1,85 @@
 # CitraScope Pi
 
-Build custom Raspberry Pi images for telescope operations with [Citrascope](https://github.com/citra-space/citrascope).
+Turnkey Raspberry Pi image for telescope operations with [Citrascope](https://github.com/citra-space/citrascope).
 
-Creates a turnkey SD card image with Citrascope telescope control software, INDI hardware support, and automatic WiFi access point.
+Pre-configured SD card image with Citrascope telescope control software, INDI hardware support, and automatic WiFi provisioning.
 
-## Quick Start
+## What You Get
 
-**Requirements:** Docker Desktop (Mac/Windows/Linux)
+- **User:** `citra` / `citra` (sudo enabled)
+- **Hostname:** `citrascope-{satellite}.local` - Each device gets a unique name from famous space missions (e.g., `citrascope-voyager.local`)
+- **SSH:** Enabled on port 22
+- **Citrascope:** Auto-starts on boot, web UI at port 24872
+- **WiFi Provisioning:** Captive portal for easy WiFi setup, automatic AP fallback
+- **INDI drivers:** Pre-installed for telescope/camera hardware (Citrascope starts drivers as needed)
+
+**Note:** Your device's unique name (like "voyager", "hubble", or "apollo") is randomly assigned on first boot and appears as both the WiFi access point name and the network hostname.
+
+## First Boot
+
+### WiFi Setup (First Time)
+
+On first boot, if not connected via Ethernet:
+
+1. **Pi creates WiFi hotspot:** Look for `citrascope-{name}` in your WiFi list (e.g., `citrascope-voyager`, `citrascope-hubble`)
+2. **Connect with your phone/laptop** using password: `citra`
+3. **Captive portal appears automatically** showing available WiFi networks
+4. **Select your network** and enter password
+5. **Pi connects to your WiFi** and disables the hotspot
+
+**Your device's unique name** (the part after "citrascope-") is randomly selected from famous space missions and stays the same forever. Remember it—that's how you'll find your device on the network!
+
+**Automatic Fallback:** If your WiFi becomes unavailable (field use, power outage), the Pi automatically re-enables the hotspot so you can always connect.
+
+### After WiFi Setup
+
+**Via Network:**
+```bash
+# Replace {name} with your device's name (e.g., voyager, hubble, apollo)
+ssh citra@citrascope-{name}.local
+# Browser: http://citrascope-{name}.local:24872
+```
+
+**Via Hotspot (field use when no WiFi):**
+- Connect to WiFi: `citrascope-{name}` (password: `citra`)
+- Browser: `http://10.41.0.1:24872`
+
+## Supported Hardware
+
+- **Pi Models:** Raspberry Pi 4 (2GB+), Pi 5
+- **Cameras:** ZWO ASI, Pi HQ Camera, USB cameras
+- **Mounts:** INDI-compatible telescope mounts
+- See [Citrascope docs](https://docs.citra.space/citrascope/) for full hardware support
+
+## Troubleshooting
+
+**Can't connect to citrascope-{name}.local:**
+```bash
+# Find IP address and connect directly
+ssh citra@<pi-ip>
+# Or check your WiFi list for the hotspot name to remind you which device it is
+```
+
+**WiFi not appearing:**
+- Wait 30-60 seconds after power-on for hotspot to start
+- Check that WiFi isn't disabled in your device settings
+- Try rebooting the Pi
+
+**Forgot device name:**
+- Check your WiFi list - the hotspot shows the name
+- Connect via ethernet and run: `hostname`
+
+---
+
+## Building Your Own Image
+
+Want to customize the image or build from source? Read on.
+
+### Requirements
+
+**Docker Desktop** (Mac/Windows/Linux) - all other dependencies handled automatically
+
+### Quick Build
 
 ```bash
 # Build image using Docker (auto-downloads Raspberry Pi OS)
@@ -17,52 +90,18 @@ Creates a turnkey SD card image with Citrascope telescope control software, INDI
 
 **Note on Docker:** The build requires `--privileged` mode to access loop devices needed for mounting disk images. The container runs as your user (not root) to avoid permission issues. All dependencies (kpartx, qemu, Python) are handled inside the container—no manual installation required.
 
-**Build time:** 15-30 minutes. **Final image:** ~3-4GB.
+**Build time:** 15-30 minutes. **Final image:** ~5GB.
 
-## What You Get
-
-- **User:** `citra` / `citra` (sudo enabled)
-- **Hostname:** `citrascope.local` (mDNS enabled)
-- **SSH:** Enabled on port 22
-- **Citrascope:** Auto-starts on boot, web UI at port 24872
-- **WiFi Provisioning:** Captive portal for easy WiFi setup, automatic AP fallback
-- **INDI Server:** Pre-installed for telescope/camera control
-
-## First Boot
-
-### WiFi Setup (First Time)
-
-On first boot, if not connected via Ethernet:
-
-1. **Pi creates WiFi hotspot:** `citrascope-XXXXXXXX` (where XXXXXXXX is last 8 chars of serial)
-2. **Connect with your phone/laptop** using password: `citrascope`
-3. **Captive portal appears automatically** showing available WiFi networks
-4. **Select your network** and enter password
-5. **Pi connects to your WiFi** and disables the hotspot
-
-**Automatic Fallback:** If your WiFi becomes unavailable (field use, power outage), the Pi automatically re-enables the hotspot so you can always connect.
-
-### After WiFi Setup
-
-**Via Network:**
-```bash
-ssh citra@citrascope.local
-# Browser: http://citrascope.local:24872
-```
-
-**Via Hotspot (field use when no WiFi):**
-- Connect to WiFi: `citrascope-XXXXXXXX` (password: `citrascope`)
-- Browser: `http://10.42.0.1:24872`
-
-## Configuration
+### Configuration
 
 Edit [scripts/config.py](scripts/config.py) to customize:
 - Username/password
-- Hostname
-- WiFi hotspot password and SSID prefix
+- Hostname prefix
+- WiFi hotspot password
 - System packages
+- Device name pool (satellite names)
 
-## Advanced Usage
+### Advanced Build Options
 
 ```bash
 # Use existing image file
@@ -78,21 +117,6 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 ./build-docker.sh customized.img --citrascope-only
 ```
 
-## Supported Hardware
-
-- **Pi Models:** Raspberry Pi 4 (2GB+), Pi 5
-- **Cameras:** ZWO ASI, Pi HQ Camera, USB cameras
-- **Mounts:** INDI-compatible telescope mounts
-- See [Citrascope docs](https://docs.citra.space/citrascope/) for full hardware support
-
-## Troubleshooting
-
-**Can't connect to citrascope.local:**
-```bash
-# Find IP address and connect directly
-ssh citra@<pi-ip>
-```
-
 ## How It Works
 
 The build process runs entirely in Docker:
@@ -101,8 +125,8 @@ The build process runs entirely in Docker:
 2. **Mounts** the image using loop devices (kpartx inside container)
 3. **Customizes** via direct file operations and chroot:
    - Creates `citra` user with sudo access
-   - Sets hostname to `citrascope`
-   - Enables SSH
+   - Generates unique device name from satellite pool
+   - Enables SSH and WiFi
    - Installs system packages (INDI, Python, build tools)
 4. **Installs** Citrascope in Python venv with systemd service
 5. **Configures** Comitup for WiFi provisioning with automatic AP fallback
