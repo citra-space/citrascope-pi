@@ -11,12 +11,12 @@ USER_UID = 1001
 USER_GID = 1001
 
 # Hostname and Network
-HOSTNAME = "citrascope"
-MDNS_DOMAIN = f"{HOSTNAME}.local"
+HOSTNAME_PREFIX = "citrascope"  # Prefix for dynamic hostname: {prefix}-{model}-{serial}
+MDNS_DOMAIN = f"{HOSTNAME_PREFIX}.local"
 
 # WiFi Access Point Configuration
 WIFI_AP_PASSWORD = "citra"
-WIFI_AP_SSID_PREFIX = HOSTNAME  # Will be: citrascope-{serial}
+WIFI_AP_SSID_PREFIX = HOSTNAME_PREFIX  # Will be: citrascope-{model}-{serial}
 
 # Citrascope Configuration
 CITRASCOPE_WEB_PORT = 24872

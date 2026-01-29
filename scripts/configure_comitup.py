@@ -7,13 +7,13 @@ from config import WIFI_AP_PASSWORD, WIFI_AP_SSID_PREFIX, ROOTFS_MOUNT
 def configure_comitup(rootfs_path):
     print("Configuring Comitup...")
     config = f"""# Comitup configuration
-ap_name: {WIFI_AP_SSID_PREFIX}-<nnnn>
+ap_name: {WIFI_AP_SSID_PREFIX}
 ap_password: {WIFI_AP_PASSWORD}
 web_service: citrascope.service
 enable_appliance_mode: true
 """
     (Path(rootfs_path) / 'etc/comitup.conf').write_text(config)
-    print("  ✓ Created /etc/comitup.conf")
+    print("  ✓ Created /etc/comitup.conf (ap_name will be updated on first boot)")
     return True
 
 def enable_comitup_service(rootfs_path):

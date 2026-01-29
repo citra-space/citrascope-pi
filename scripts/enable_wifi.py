@@ -18,18 +18,33 @@ def main():
     
     print("Enabling WiFi hardware...")
     
+    # Fix NetworkManager state file to enable WiFi
+    nm_state_file = Path(ROOTFS_MOUNT) / 'var/lib/NetworkManager/NetworkManager.state'
+    if nm_state_file.exists():
+        state_content = nm_state_file.read_text()
+        state_content = state_content.replace('WirelessEnabled=false', 'WirelessEnabled=true')
+        nm_state_file.write_text(state_content)
+        print("  ✓ Enabled WiFi in NetworkManager state file")
+    else:
+        # Create state file with WiFi enabled
+        nm_state_file.parent.mkdir(parents=True, exist_ok=True)
+        nm_state_file.write_text('[main]\nNetworkingEnabled=true\nWirelessEnabled=true\nWWANEnabled=true\n')
+        print("  ✓ Created NetworkManager state file with WiFi enabled")
+    
     # Create systemd service to enable WiFi radio on boot
     service_content = '''[Unit]
-Description=Turn wifi on, regardless of regulatory domain
-After=network.target network-online.target
-Wants=network-online.target
+Description=Enable WiFi hardware early in boot
+DefaultDependencies=no
+Before=NetworkManager.service
+After=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/nmcli radio wifi on
+ExecStart=/usr/sbin/rfkill unblock wifi
+RemainAfterExit=yes
 
 [Install]
-WantedBy=NetworkManager.service
+WantedBy=multi-user.target
 '''
     
     # Write service file
@@ -38,7 +53,7 @@ WantedBy=NetworkManager.service
         f.write(service_content)
     
     # Enable service
-    service_link = Path(ROOTFS_MOUNT) / 'etc/systemd/system/NetworkManager.service.wants/wifi-on.service'
+    service_link = Path(ROOTFS_MOUNT) / 'etc/systemd/system/multi-user.target.wants/wifi-on.service'
     service_link.parent.mkdir(parents=True, exist_ok=True)
     
     if service_link.exists() or service_link.is_symlink():
@@ -46,7 +61,7 @@ WantedBy=NetworkManager.service
     
     service_link.symlink_to('/etc/systemd/system/wifi-on.service')
     
-    print("  ✓ Created wifi-on.service")
+    print("  ✓ Created wifi-on.service (runs before NetworkManager)")
     return True
 
 if __name__ == "__main__":

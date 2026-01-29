@@ -26,27 +26,24 @@ SCRIPTS_DIR = Path(__file__).parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 # Now import from scripts directory
-from scripts.config import HOSTNAME
+from scripts.config import HOSTNAME_PREFIX
 from scripts.mount_img import ImageMounter
 import scripts.add_user
-import scripts.set_hostname
 import scripts.enable_ssh
 import scripts.configure_headless
+import scripts.configure_hostname
 import scripts.update_upgrade_chroot
 import scripts.install_citrascope
 import scripts.configure_comitup
 import scripts.enable_wifi
 
 # Build step definitions
-CUSTOMIZE_STEPS = [
+BUILD_STEPS = [
+    ("Configure hostname/identity", scripts.configure_hostname.main),
     ("Add user", scripts.add_user.main),
-    ("Set hostname", scripts.set_hostname.main),
     ("Enable SSH", scripts.enable_ssh.main),
     ("Configure headless settings", scripts.configure_headless.main),
     ("Update packages", scripts.update_upgrade_chroot.main),
-]
-
-CITRASCOPE_STEPS = [
     ("Install Citrascope", scripts.install_citrascope.main),
     ("Configure Comitup WiFi", scripts.configure_comitup.main),
     ("Enable WiFi hardware", scripts.enable_wifi.main),
@@ -118,8 +115,8 @@ def download_raspios(output_dir="."):
         print(f"\n✗ Extraction failed: {e}")
         sys.exit(1)
 
-# Global list to track all build steps
-BUILD_STEPS = []
+# Global list to track completed build steps for summary
+BUILD_RESULTS = []
 
 def run_step(name, func, *args, **kwargs):
     """Run a build step with error handling and timing"""
@@ -140,11 +137,11 @@ def run_step(name, func, *args, **kwargs):
         # Check if function returned False (failure)
         if result is False:
             print(f"✗ {name} failed (took {elapsed:.1f}s)", flush=True)
-            BUILD_STEPS.append(step_result)
+            BUILD_RESULTS.append(step_result)
             sys.exit(1)
         
         step_result['success'] = True
-        BUILD_STEPS.append(step_result)
+        BUILD_RESULTS.append(step_result)
         
         minutes, seconds = divmod(int(elapsed), 60)
         if minutes > 0:
@@ -156,7 +153,7 @@ def run_step(name, func, *args, **kwargs):
     except Exception as e:
         elapsed = time.time() - start_time
         step_result['elapsed'] = elapsed
-        BUILD_STEPS.append(step_result)
+        BUILD_RESULTS.append(step_result)
         
         print(f"✗ {name} failed after {elapsed:.1f}s: {e}", flush=True)
         import traceback
@@ -165,7 +162,7 @@ def run_step(name, func, *args, **kwargs):
 
 def print_build_summary():
     """Print a summary of all build steps"""
-    if not BUILD_STEPS:
+    if not BUILD_RESULTS:
         return
     
     print(f"\n{'='*60}", flush=True)
@@ -173,7 +170,7 @@ def print_build_summary():
     print(f"{'='*60}", flush=True)
     
     # Calculate column widths
-    max_name_len = max(len(step['name']) for step in BUILD_STEPS)
+    max_name_len = max(len(step['name']) for step in BUILD_RESULTS)
     col_width = max(max_name_len, 20)
     
     # Print header
@@ -182,7 +179,7 @@ def print_build_summary():
     
     # Print each step
     total_time = 0
-    for step in BUILD_STEPS:
+    for step in BUILD_RESULTS:
         status = "✓ SUCCESS" if step['success'] else "✗ FAILED"
         elapsed = step['elapsed']
         total_time += elapsed
@@ -206,18 +203,11 @@ def print_build_summary():
     print(f"{'='*60}", flush=True)
     print(f"Build completed: {datetime.now().astimezone().strftime('%Y-%m-%d %H:%M:%S %Z')}\n", flush=True)
 
-def customize_base_image(image_path):
-    """Customize the base Raspberry Pi OS image"""
+def customize_image(image_path):
+    """Customize Raspberry Pi OS image with all build steps"""
     
     with ImageMounter(image_path):
-        for name, func in CUSTOMIZE_STEPS:
-            run_step(name, func)
-
-def install_citrascope_software(image_path):
-    """Install Citrascope and WiFi AP setup"""
-    
-    with ImageMounter(image_path):
-        for name, func in CITRASCOPE_STEPS:
+        for name, func in BUILD_STEPS:
             run_step(name, func)
 
 def build_complete_image(base_image_path, output_path):
@@ -288,17 +278,11 @@ def build_complete_image(base_image_path, output_path):
         print(f"Warning: Could not resize filesystem: {e}", flush=True)
         print(f"Filesystem will auto-expand on first boot\n", flush=True)
     
-    # Customize base image
+    # Customize image with all build steps
     print(f"{'='*60}", flush=True)
-    print(f"Customizing base image...", flush=True)
+    print(f"Customizing image...", flush=True)
     print(f"{'='*60}\n", flush=True)
-    customize_base_image(str(output_path))
-    
-    # Install Citrascope
-    print(f"\n{'='*60}", flush=True)
-    print(f"Installing Citrascope software...", flush=True)
-    print(f"{'='*60}\n", flush=True)
-    install_citrascope_software(str(output_path))
+    customize_image(str(output_path))
     
     print(f"\n{'='*60}")
     print(f"✓ BUILD COMPLETE")
@@ -325,21 +309,11 @@ Examples:
 
   # Build with custom output name
   sudo ./build_image.py -o citrascope-v1.0.img
-  
-  # Only customize base (no Citrascope)
-  sudo ./build_image.py existing.img --customize-only
-  
-  # Only install Citrascope (assumes already customized)
-  sudo ./build_image.py customized.img --citrascope-only
         """
     )
     
     parser.add_argument('image', nargs='?', help='Path to Raspberry Pi OS image file (auto-downloads if not provided)')
     parser.add_argument('-o', '--output', help='Output image path (default: adds -citrascope suffix)')
-    parser.add_argument('--customize-only', action='store_true', 
-                        help='Only customize base image (skip Citrascope installation)')
-    parser.add_argument('--citrascope-only', action='store_true',
-                        help='Only install Citrascope (assumes image already customized)')
     
     args = parser.parse_args()
     
@@ -357,18 +331,9 @@ Examples:
             print("Downloading Raspberry Pi OS Lite (ARM64)...", flush=True)
             image_path = download_raspios()
         
-        # Run appropriate build steps
-        if args.customize_only:
-            print("\n>>> Mode: Customize base image only\n", flush=True)
-            customize_base_image(image_path)
-            print_build_summary()
-        elif args.citrascope_only:
-            print("\n>>> Mode: Install Citrascope only\n", flush=True)
-            install_citrascope_software(image_path)
-            print_build_summary()
-        else:
-            print("\n>>> Mode: Complete build\n", flush=True)
-            build_complete_image(image_path, args.output)
+        # Build complete image
+        print("\n>>> Building complete Citrascope image\n", flush=True)
+        build_complete_image(image_path, args.output)
     
     except SystemExit:
         # Print summary even on failure
