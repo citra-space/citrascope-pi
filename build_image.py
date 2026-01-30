@@ -74,16 +74,23 @@ def download_raspios(output_dir="."):
         print(f"URL: {RASPIOS_URL}")
         print(f"This may take several minutes (~500MB)...\n")
         
+        last_reported_percent = -1
+        
         def progress(block_num, block_size, total_size):
+            nonlocal last_reported_percent
             downloaded = block_num * block_size
             percent = min(100, (downloaded / total_size) * 100)
-            mb_downloaded = downloaded / (1024 * 1024)
-            mb_total = total_size / (1024 * 1024)
-            print(f"\rProgress: {percent:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)", end='', flush=True)
+            # Only report at 10% intervals
+            current_threshold = int(percent / 10) * 10
+            if current_threshold > last_reported_percent:
+                mb_downloaded = downloaded / (1024 * 1024)
+                mb_total = total_size / (1024 * 1024)
+                print(f"Progress: {current_threshold}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)", flush=True)
+                last_reported_percent = current_threshold
         
         try:
             urllib.request.urlretrieve(RASPIOS_URL, xz_path, reporthook=progress)
-            print("\n✓ Download complete")
+            print("✓ Download complete")
         except Exception as e:
             print(f"\n✗ Download failed: {e}")
             sys.exit(1)
@@ -91,6 +98,11 @@ def download_raspios(output_dir="."):
     # Extract .xz file
     print(f"\nExtracting {xz_path.name}...")
     try:
+        # Get uncompressed size estimate (compressed size * ~2.5 typical ratio)
+        compressed_size = xz_path.stat().st_size
+        estimated_size = compressed_size * 2.5
+        last_reported_percent = -1
+        
         with lzma.open(xz_path, 'rb') as f_in:
             with open(img_path, 'wb') as f_out:
                 chunk_size = 1024 * 1024  # 1MB chunks
@@ -99,11 +111,15 @@ def download_raspios(output_dir="."):
                     if not chunk:
                         break
                     f_out.write(chunk)
-                    # Show progress
+                    # Show progress at 10% intervals
                     mb_written = f_out.tell() / (1024 * 1024)
-                    print(f"\rExtracted: {mb_written:.1f} MB", end='', flush=True)
+                    percent = min(100, (f_out.tell() / estimated_size) * 100)
+                    current_threshold = int(percent / 10) * 10
+                    if current_threshold > last_reported_percent:
+                        print(f"Extracted: {mb_written:.1f} MB (~{current_threshold}%)", flush=True)
+                        last_reported_percent = current_threshold
         
-        print("\n✓ Extraction complete")
+        print("✓ Extraction complete")
         
         # Remove .xz file to save space
         xz_path.unlink()
