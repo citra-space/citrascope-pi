@@ -33,11 +33,9 @@ def enable_ssh_service(rootfs_path):
         print(f"Warning: SSH service file not found at {ssh_service}")
         return False
 
-def main():
-    rootfs_path = ROOTFS_MOUNT
-
-    if len(sys.argv) > 1:
-        rootfs_path = sys.argv[1]
+def main(rootfs_path=None):
+    if rootfs_path is None:
+        rootfs_path = ROOTFS_MOUNT
 
     if not os.path.exists(rootfs_path):
         print(f"Error: Root filesystem path {rootfs_path} does not exist")
@@ -51,4 +49,6 @@ def main():
         return False
 
 if __name__ == "__main__":
-    sys.exit(0 if main() else 1)
+    # Only parse sys.argv when run directly
+    rootfs_path = sys.argv[1] if len(sys.argv) > 1 else None
+    sys.exit(0 if main(rootfs_path) else 1)

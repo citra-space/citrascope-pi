@@ -41,8 +41,9 @@ jobs:
         docker run --rm --privileged \
           -v "$(pwd):/workspace" \
           -v /dev:/dev \
+          -e IMAGE_VERSION="${IMAGE_VERSION}" \
           lemon-pi-builder \
-          bash -c "sudo python3 build_image.py -o citrascope-pi-${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/citrascope-pi-${IMAGE_VERSION}.img"
+          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/citrascope-pi-\${IMAGE_VERSION}.img"
     
     - name: Upload image artifact
       uses: actions/upload-artifact@v4
