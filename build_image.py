@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import urllib.request
 import lzma
+import time
 from datetime import datetime
 
 # Check Python version
@@ -249,6 +250,7 @@ def build_complete_image(base_image_path, output_path):
     
     # Expand image to have room for packages (add 2GB)
     print(f"Expanding image to accommodate packages...", flush=True)
+    expand_start = time.time()
     current_size = output_path.stat().st_size
     additional_space = 2 * 1024 * 1024 * 1024  # 2GB
     new_size = current_size + additional_space
@@ -289,8 +291,12 @@ def build_complete_image(base_image_path, output_path):
             subprocess.run(['sudo', 'kpartx', '-d', str(output_path)], 
                           capture_output=True)
             
+        expand_elapsed = time.time() - expand_start
+        BUILD_RESULTS.append({'name': 'Expand image', 'success': True, 'elapsed': expand_elapsed})
         print(f"✓ Image expanded by {additional_space // (1024*1024*1024)}GB\n", flush=True)
     except Exception as e:
+        expand_elapsed = time.time() - expand_start
+        BUILD_RESULTS.append({'name': 'Expand image', 'success': False, 'elapsed': expand_elapsed})
         print(f"Warning: Could not resize filesystem: {e}", flush=True)
         print(f"Filesystem will auto-expand on first boot\n", flush=True)
     
