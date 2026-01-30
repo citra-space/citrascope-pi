@@ -2,6 +2,12 @@
 """
 Install Citrascope into a mounted Raspberry Pi image.
 This script sets up a Python virtual environment and installs Citrascope with INDI support.
+
+SECURITY NOTE: This script avoids shell injection vulnerabilities by:
+- Using subprocess.run() with list arguments (NOT shell=True with f-strings)
+- Writing complex commands to temporary script files instead of inline strings
+- Calling executables directly instead of using 'bash -c' with variable interpolation
+- Validating config values in config.py to reject shell metacharacters
 """
 
 import os
@@ -60,26 +66,60 @@ def install_citrascope(rootfs_path, homedir):
             f.write('eval "$(pyenv init -)"\n')
         
         # Install Python 3.12 using pyenv
-        subprocess.run(
-            f"chroot {rootfs_path} su - {USERNAME} -c 'bash -c \"export PYENV_ROOT=\\$HOME/.pyenv && export PATH=\\$PYENV_ROOT/bin:\\$PATH && pyenv install 3.12.0 && pyenv global 3.12.0\"'",
-            check=True, shell=True
-        )
+        # Use a script file to avoid shell injection
+        pyenv_script_path = os.path.join(homedir, '.pyenv_install.sh')
+        with open(pyenv_script_path, 'w') as f:
+            f.write('#!/bin/bash\n')
+            f.write('set -e\n')
+            f.write('export PYENV_ROOT="$HOME/.pyenv"\n')
+            f.write('export PATH="$PYENV_ROOT/bin:$PATH"\n')
+            f.write('pyenv install 3.12\n')
+            f.write('pyenv global 3.12\n')
+        os.chmod(pyenv_script_path, 0o755)
+        
+        subprocess.run([
+            'chroot', rootfs_path,
+            'su', '-', USERNAME, '-c',
+            '/home/' + USERNAME + '/.pyenv_install.sh'
+        ], check=True)
+        
+        # Clean up script
+        os.remove(pyenv_script_path)
     
     print("Creating Citrascope virtual environment...")
     with mount_context(rootfs_path):
         # Create virtual environment using pyenv's Python 3.12 directly
-        subprocess.run(
-            f"chroot {rootfs_path} su - {USERNAME} -c 'bash -c \"/home/{USERNAME}/.pyenv/versions/3.12.0/bin/python3 -m venv {CITRASCOPE_VENV_PATH}\"'",
-            check=True, shell=True
-        )
+        # Build python path - pyenv installs to 3.12.x, find the exact version
+        pyenv_versions_dir = os.path.join(homedir, '.pyenv/versions')
+        python_path = None
+        if os.path.exists(pyenv_versions_dir):
+            for version_dir in os.listdir(pyenv_versions_dir):
+                if version_dir.startswith('3.12'):
+                    python_path = os.path.join('/home', USERNAME, '.pyenv/versions', version_dir, 'bin/python3')
+                    break
+        
+        if not python_path:
+            raise RuntimeError("Python 3.12 not found in pyenv versions")
+        
+        subprocess.run([
+            'chroot', rootfs_path,
+            'su', '-', USERNAME, '-c',
+            python_path + ' -m venv ' + CITRASCOPE_VENV_PATH
+        ], check=True)
         
         print("Installing Citrascope with INDI support...")
         
         # Install citrascope[indi] in the venv
+        # Use pip directly from venv instead of sourcing activate
+        pip_path = os.path.join(CITRASCOPE_VENV_PATH, 'bin', 'pip')
         subprocess.run([
             'chroot', rootfs_path,
-            '/bin/bash', '-c',
-            f'source {CITRASCOPE_VENV_PATH}/bin/activate && pip install --upgrade pip && pip install citrascope[indi]'
+            pip_path, 'install', '--upgrade', 'pip'
+        ], check=True)
+        
+        subprocess.run([
+            'chroot', rootfs_path,
+            pip_path, 'install', 'citrascope[indi]'
         ], check=True)
         
         print("Citrascope installed successfully")
@@ -125,7 +165,11 @@ def set_permissions(rootfs_path, homedir):
     # Change ownership of home directory recursively
     # Use chown -R to handle symlinks and special files properly
     try:
-        subprocess.run(['chown', '-R', f'{USER_UID}:{USER_GID}', homedir], check=True)
+        subprocess.run([
+            'chown', '-R',
+            str(USER_UID) + ':' + str(USER_GID),
+            homedir
+        ], check=True)
         print("File ownership set")
     except subprocess.CalledProcessError as e:
         print(f"Warning: Some files could not have ownership changed: {e}")

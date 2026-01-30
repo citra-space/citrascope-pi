@@ -4,6 +4,20 @@ Centralized configuration for all build scripts.
 Edit these values to customize your build.
 """
 
+import re
+import sys
+
+def validate_safe_string(value, field_name):
+    """
+    Validate that a string doesn't contain shell metacharacters.
+    Prevents command injection via config values.
+    """
+    # Allow alphanumeric, underscore, hyphen, dot, forward slash
+    if not re.match(r'^[a-zA-Z0-9_./-]+$', value):
+        print(f"ERROR: {field_name} contains invalid characters: {value}", file=sys.stderr)
+        print(f"Only alphanumeric, underscore, hyphen, dot, and forward slash are allowed.", file=sys.stderr)
+        sys.exit(1)
+
 # System User Configuration
 USERNAME = "citra"
 PASSWORD = "citra"
@@ -78,3 +92,10 @@ USER_GROUPS = [
     'i2c',       # I2C bus devices
     'spi',       # SPI bus devices
 ]
+
+# Validate configuration to prevent shell injection
+validate_safe_string(USERNAME, "USERNAME")
+validate_safe_string(HOSTNAME_PREFIX, "HOSTNAME_PREFIX")
+validate_safe_string(WIFI_AP_PASSWORD, "WIFI_AP_PASSWORD")
+validate_safe_string(WIFI_AP_SSID_PREFIX, "WIFI_AP_SSID_PREFIX")
+validate_safe_string(CITRASCOPE_VENV_PATH, "CITRASCOPE_VENV_PATH")
