@@ -3,6 +3,7 @@ name: Build CitraScope Image
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   workflow_dispatch:
 
 jobs:
@@ -12,6 +13,19 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Determine version
+      id: version
+      run: |
+        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          # Tagged release: extract version from tag (e.g., refs/tags/v0.1.0 -> v0.1.0)
+          VERSION="${GITHUB_REF#refs/tags/}"
+        else
+          # Dev build: use main-YYYYMMDD-SHORTSHA format
+          VERSION="main-$(date +%Y%m%d)-$(git rev-parse --short HEAD)"
+        fi
+        echo "IMAGE_VERSION=${VERSION}" >> $GITHUB_ENV
+        echo "Version: ${VERSION}"
     
     - name: Build Docker image
       run: |
@@ -28,11 +42,20 @@ jobs:
           -v "$(pwd):/workspace" \
           -v /dev:/dev \
           lemon-pi-builder \
-          bash -c "sudo python3 build_image.py && sudo chown builder:builder /workspace/*-citrascope.img"
+          bash -c "sudo python3 build_image.py -o citrascope-pi-${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/citrascope-pi-${IMAGE_VERSION}.img"
     
     - name: Upload image artifact
       uses: actions/upload-artifact@v4
       with:
-        name: citrascope-image
-        path: '*-citrascope.img'
+        name: citrascope-pi-${{ env.IMAGE_VERSION }}
+        path: 'citrascope-pi-${{ env.IMAGE_VERSION }}.img'
         retention-days: 7
+    
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: citrascope-pi-${{ env.IMAGE_VERSION }}.img
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
