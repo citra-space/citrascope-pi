@@ -12,6 +12,7 @@ Pre-configured SD card image with Citrascope telescope control software, INDI ha
 - **Citrascope:** Auto-starts on boot, web UI at port 24872
 - **WiFi Provisioning:** Captive portal for easy WiFi setup, automatic AP fallback
 - **INDI drivers:** Pre-installed for telescope/camera hardware (Citrascope starts drivers as needed)
+- **GPS Time Sync:** Automatic GPS detection for microsecond-accurate timekeeping (optional hardware)
 
 **Note:** Your device's unique name (like "voyager", "hubble", or "apollo") is randomly assigned on first boot and appears as both the WiFi access point name and the network hostname.
 
@@ -50,6 +51,17 @@ ssh citra@citrascope-{name}.local
 - **Cameras:** ZWO ASI, Pi HQ Camera, USB cameras
 - **Mounts:** INDI-compatible telescope mounts
 - See [Citrascope docs](https://docs.citra.space/citrascope/) for full hardware support
+
+## GPS Time Synchronization (Optional)
+
+The image includes automatic GPS time synchronization for microsecond-accurate timekeeping. USB GPS modules are plug-and-play. UART GPS works on GPIO 14/15 by default, with PPS support on GPIO 18.
+
+**USB GPS:** Just plug it in and wait 60 seconds for lock.  
+**UART GPS:** Connect to GPIO 14 (TX), 15 (RX), 18 (PPS), ground, and 5V.
+
+Check status: `chronyc sources -v` and `cgps -s`
+
+No GPS hardware? System uses internet NTP automatically with zero impact. See [scripts/configure_gps_timing.py](scripts/configure_gps_timing.py) for detailed setup, GPIO pinouts, troubleshooting, and configuration options.
 
 ## Troubleshooting
 
@@ -100,6 +112,7 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 - WiFi hotspot password
 - System packages
 - Device name pool (satellite names)
+- GPS timing options (PPS GPIO pin, UART configuration)
 
 ### Advanced Build Options
 
@@ -127,10 +140,11 @@ The build process runs entirely in Docker:
    - Creates `citra` user with sudo access
    - Generates unique device name from satellite pool
    - Enables SSH and WiFi
-   - Installs system packages (INDI, Python, build tools)
-4. **Installs** Citrascope in Python venv with systemd service
-5. **Configures** Comitup for WiFi provisioning with automatic AP fallback
-6. **Unmounts** and outputs ready-to-flash image
+   - Installs system packages (INDI, Python, build tools, GPS timing)
+4. **Configures** GPS time synchronization with automatic hardware detection
+5. **Installs** Citrascope in Python venv with systemd service
+6. **Configures** Comitup for WiFi provisioning with automatic AP fallback
+7. **Unmounts** and outputs ready-to-flash image
 
 All modifications happen in the Docker container on your machine—the Pi receives a complete, pre-configured image.
 

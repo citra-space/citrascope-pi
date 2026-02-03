@@ -80,6 +80,11 @@ SYSTEM_PACKAGES = [
     'libharfbuzz-dev',  # Needed for Pillow text rendering
     'libfribidi-dev',  # Needed for Pillow bidirectional text
     'libxcb1-dev',  # Needed for Pillow X11 support
+    # GPS Time Synchronization
+    'chrony',  # Modern NTP daemon with GPS support
+    'gpsd',  # GPS daemon for hardware abstraction
+    'gpsd-clients',  # GPS testing tools (cgps, gpsmon)
+    'pps-tools',  # PPS debugging utilities (ppstest)
 ]
 
 # User Groups (in addition to primary group)
@@ -92,6 +97,11 @@ USER_GROUPS = [
     'i2c',       # I2C bus devices
     'spi',       # SPI bus devices
 ]
+
+# GPS Timing Configuration
+GPS_PPS_GPIO = 18  # GPIO pin for PPS signal (common convention)
+GPS_ENABLE_PRIMARY_UART = True  # Enable /dev/ttyAMA0 on GPIO 14/15 (most common)
+GPS_ENABLE_SECONDARY_UART = True  # Enable /dev/ttyAMA5 on GPIO 12/13 (alternative)
 
 # Validate configuration to prevent shell injection
 validate_safe_string(USERNAME, "USERNAME")

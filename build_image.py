@@ -34,6 +34,7 @@ import scripts.enable_ssh
 import scripts.configure_headless
 import scripts.configure_hostname
 import scripts.update_upgrade_chroot
+import scripts.configure_gps_timing
 import scripts.install_citrascope
 import scripts.configure_comitup
 import scripts.enable_wifi
@@ -45,6 +46,7 @@ BUILD_STEPS = [
     ("Enable SSH", scripts.enable_ssh.main),
     ("Configure headless settings", scripts.configure_headless.main),
     ("Update packages", scripts.update_upgrade_chroot.main),
+    ("Configure GPS timing", scripts.configure_gps_timing.main),
     ("Install Citrascope", scripts.install_citrascope.main),
     ("Configure Comitup WiFi", scripts.configure_comitup.main),
     ("Enable WiFi hardware", scripts.enable_wifi.main),
