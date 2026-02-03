@@ -15,9 +15,10 @@ This script configures automatic GPS-based time synchronization using:
 SUPPORTED HARDWARE
 ------------------
 USB GPS:
-  - Plug and play, auto-detected via udev
+  - Plug and play, monitored on /dev/ttyUSB0 and /dev/ttyACM0
   - Any generic NMEA GPS (Adafruit Ultimate GPS, GlobalSat BU-353, etc.)
-  - u-blox NEO series (6M, 7M, 8M, 9M)
+  - u-blox NEO series (6M, 7M, 8M, 9M) - typically /dev/ttyACM0
+  - FTDI/Prolific USB-to-serial GPS - typically /dev/ttyUSB0
 
 UART GPS:
   - Default: GPIO 14/15 (/dev/ttyAMA0) - most common
@@ -235,10 +236,15 @@ def configure_gpsd(rootfs_path):
     
     # Build device list based on configuration
     devices = []
+    # USB GPS devices (common types)
+    devices.append('/dev/ttyUSB0')  # USB-to-serial GPS (FTDI, Prolific, etc.)
+    devices.append('/dev/ttyACM0')  # USB CDC ACM GPS (u-blox, etc.)
+    # UART GPS devices
     if GPS_ENABLE_PRIMARY_UART:
         devices.append('/dev/ttyAMA0')
     if GPS_ENABLE_SECONDARY_UART:
         devices.append('/dev/ttyAMA5')
+    # PPS device
     devices.append('/dev/pps0')
     
     devices_str = ' '.join(devices)
@@ -248,11 +254,12 @@ def configure_gpsd(rootfs_path):
 # It automatically detects when GPS hardware is connected
 START_DAEMON="true"
 
-# Auto-detect USB GPS devices
+# Auto-detect USB GPS devices (via udev rules)
 USBAUTO="true"
 
-# Static devices (UART GPS and PPS)
+# Static devices (USB, UART GPS, and PPS)
 # These devices are monitored continuously; GPS data appears immediately when connected
+# Non-existent devices are harmlessly ignored
 DEVICES="{devices_str}"
 
 # Start immediately, don't wait for clients (-n flag)
@@ -340,13 +347,15 @@ def main():
         
         print("\nGPS timing configuration completed successfully!")
         print("GPS hardware will be automatically detected when connected:")
-        print("  - USB GPS: plug and play")
+        print("  - USB GPS: /dev/ttyUSB0 (FTDI/Prolific) or /dev/ttyACM0 (u-blox)")
         if GPS_ENABLE_PRIMARY_UART:
             print("  - UART GPS: GPIO 14/15 (/dev/ttyAMA0)")
         if GPS_ENABLE_SECONDARY_UART:
             print("  - UART GPS: GPIO 12/13 (/dev/ttyAMA5)")
         print(f"  - PPS: GPIO {GPS_PPS_GPIO}")
         print("System will fall back to network NTP if no GPS is present.")
+        print("\nNote: USB GPS without PPS provides ~50-200ms accuracy.")
+        print("For microsecond-level timing, use UART GPS with PPS output.")
         return True
         
     except Exception as e:

@@ -52,16 +52,15 @@ ssh citra@citrascope-{name}.local
 - **Mounts:** INDI-compatible telescope mounts
 - See [Citrascope docs](https://docs.citra.space/citrascope/) for full hardware support
 
-## GPS Time Synchronization (Optional)
+## GPS Support (Optional)
 
-The image includes automatic GPS time synchronization for microsecond-accurate timekeeping. USB GPS modules are plug-and-play. UART GPS works on GPIO 14/15 by default, with PPS support on GPIO 18.
+**Location data:** Any USB or UART GPS provides position and velocity for telescope tracking and logging.
 
-**USB GPS:** Just plug it in and wait 60 seconds for lock.  
-**UART GPS:** Connect to GPIO 14 (TX), 15 (RX), 18 (PPS), ground, and 5V.
+**High-precision timing:** UART GPS with PPS output on GPIO 18 provides microsecond-accurate timekeeping (Stratum 1). USB GPS lacks PPS and won't improve timing beyond internet NTP.
 
-Check status: `chronyc sources -v` and `cgps -s`
+Check GPS: `cgps -s` | Check time sources: `chronyc sources -v`
 
-No GPS hardware? System uses internet NTP automatically with zero impact. See [scripts/configure_gps_timing.py](scripts/configure_gps_timing.py) for detailed setup, GPIO pinouts, troubleshooting, and configuration options.
+See [scripts/configure_gps_timing.py](scripts/configure_gps_timing.py) for GPIO pinouts, hardware setup, and troubleshooting.
 
 ## Troubleshooting
 
