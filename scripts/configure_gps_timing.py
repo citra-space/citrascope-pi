@@ -39,9 +39,10 @@ Default pins (GPIO 14/15):
   Pin 6  (Ground)  → GPS GND
   Pin 2 or 4 (5V)  → GPS VCC
 
-Alternative pins (GPIO 12/13 - already enabled):
+Alternative pins (GPIO 12/13):
   Pin 32 (GPIO 12) → GPS TX
   Pin 33 (GPIO 13) → GPS RX
+  Requires manual config.txt edit (see CONFIGURATION section)
   Edit /etc/default/gpsd: DEVICES="/dev/ttyAMA5 /dev/pps0"
   Run: sudo systemctl restart gpsd
 
@@ -79,10 +80,11 @@ Change PPS GPIO pin:
   Reboot
 
 Use different UART pins:
-  Edit /boot/firmware/config.txt:
+  Pi 3/4: Edit /boot/firmware/config.txt:
     dtoverlay=uart3   # GPIO 4/5
     dtoverlay=uart4   # GPIO 8/9
-  Reboot
+  Pi 5: Different UART configuration, consult Pi 5 documentation
+  Reboot after changes
 
 Disable serial console (if needed):
   Automatically done for primary UART (GPIO 14/15)
@@ -153,8 +155,7 @@ from config import (
     ROOTFS_MOUNT, 
     BOOT_MOUNT,
     GPS_PPS_GPIO,
-    GPS_ENABLE_PRIMARY_UART,
-    GPS_ENABLE_SECONDARY_UART
+    GPS_ENABLE_PRIMARY_UART
 )
 
 def configure_boot_config(boot_path):
@@ -174,19 +175,12 @@ def configure_boot_config(boot_path):
     gps_config = '\n# GPS Time Synchronization\n'
     
     if GPS_ENABLE_PRIMARY_UART:
-        gps_config += '# Enable hardware UART for GPS\n'
+        gps_config += '# Enable hardware UART for GPS (works on all Pi models)\n'
         gps_config += 'enable_uart=1\n'
-        gps_config += '# Move Bluetooth to mini-UART, free hardware UART for GPS\n'
-        gps_config += 'dtoverlay=pi3-miniuart-bt\n'
     
     # Enable PPS support
     gps_config += f'# Enable PPS (Pulse Per Second) on GPIO {GPS_PPS_GPIO}\n'
     gps_config += f'dtoverlay=pps-gpio,gpiopin={GPS_PPS_GPIO}\n'
-    
-    # Enable additional UARTs for flexibility
-    if GPS_ENABLE_SECONDARY_UART:
-        gps_config += '# Enable additional UARTs for alternative GPS connections\n'
-        gps_config += 'dtparam=uart5=on\n'
     
     # Check if GPS config already exists
     if 'GPS Time Synchronization' not in content:
@@ -241,9 +235,7 @@ def configure_gpsd(rootfs_path):
     devices.append('/dev/ttyACM0')  # USB CDC ACM GPS (u-blox, etc.)
     # UART GPS devices
     if GPS_ENABLE_PRIMARY_UART:
-        devices.append('/dev/ttyAMA0')
-    if GPS_ENABLE_SECONDARY_UART:
-        devices.append('/dev/ttyAMA5')
+        devices.append('/dev/ttyAMA0')  # Primary UART (all Pi models)
     # PPS device
     devices.append('/dev/pps0')
     
@@ -350,9 +342,8 @@ def main():
         print("  - USB GPS: /dev/ttyUSB0 (FTDI/Prolific) or /dev/ttyACM0 (u-blox)")
         if GPS_ENABLE_PRIMARY_UART:
             print("  - UART GPS: GPIO 14/15 (/dev/ttyAMA0)")
-        if GPS_ENABLE_SECONDARY_UART:
-            print("  - UART GPS: GPIO 12/13 (/dev/ttyAMA5)")
         print(f"  - PPS: GPIO {GPS_PPS_GPIO}")
+        print("\nConfiguration is compatible with all Raspberry Pi models (3/4/5).")
         print("System will fall back to network NTP if no GPS is present.")
         print("\nNote: USB GPS without PPS provides ~50-200ms accuracy.")
         print("For microsecond-level timing, use UART GPS with PPS output.")

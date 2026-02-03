@@ -100,8 +100,7 @@ USER_GROUPS = [
 
 # GPS Timing Configuration
 GPS_PPS_GPIO = 18  # GPIO pin for PPS signal (common convention)
-GPS_ENABLE_PRIMARY_UART = True  # Enable /dev/ttyAMA0 on GPIO 14/15 (most common)
-GPS_ENABLE_SECONDARY_UART = True  # Enable /dev/ttyAMA5 on GPIO 12/13 (alternative)
+GPS_ENABLE_PRIMARY_UART = True  # Enable /dev/ttyAMA0 on GPIO 14/15 (all Pi models)
 
 # Validate configuration to prevent shell injection
 validate_safe_string(USERNAME, "USERNAME")
