@@ -35,6 +35,7 @@ import scripts.configure_headless
 import scripts.configure_hostname
 import scripts.update_upgrade_chroot
 import scripts.configure_gps_timing
+import scripts.configure_banner
 import scripts.install_citrascope
 import scripts.configure_comitup
 import scripts.enable_wifi
@@ -50,6 +51,7 @@ BUILD_STEPS = [
     ("Install Citrascope", scripts.install_citrascope.main),
     ("Configure Comitup WiFi", scripts.configure_comitup.main),
     ("Enable WiFi hardware", scripts.enable_wifi.main),
+    ("Configure login banner", scripts.configure_banner.main),
 ]
 
 # Latest Raspberry Pi OS Lite (ARM64) download URL
@@ -320,6 +322,14 @@ def build_complete_image(base_image_path, output_path):
     print_build_summary()
 
 def main():
+    # Show banner splash
+    print("\n")
+    for line in scripts.configure_banner.CITRA_ASCII_LINES:
+        # Unescape for display (convert \\033 to \033)
+        display_line = line.replace("\\033", "\033")
+        print("  " + display_line)
+    print("\n  Let's build a CitraScope image!!\n")
+
     parser = argparse.ArgumentParser(
         description='Build Raspberry Pi images with Citrascope telescope control software',
         formatter_class=argparse.RawDescriptionHelpFormatter,
