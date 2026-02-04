@@ -122,7 +122,25 @@ def install_citrascope(rootfs_path, homedir):
             pip_path, 'install', 'citrascope[indi]'
         ], check=True)
         
-        print("Citrascope installed successfully")
+        # Get installed version
+        result = subprocess.run([
+            'chroot', rootfs_path,
+            pip_path, 'show', 'citrascope'
+        ], capture_output=True, text=True, check=True)
+        
+        # Parse version from pip show output
+        version = None
+        for line in result.stdout.split('\n'):
+            if line.startswith('Version:'):
+                version = line.split(':', 1)[1].strip()
+                break
+        
+        if version:
+            print(f"Citrascope v{version} installed successfully")
+            return version
+        else:
+            print("Citrascope installed successfully")
+            return "unknown"
 
 def create_systemd_service(rootfs_path):
     """Create systemd service for Citrascope"""
@@ -136,8 +154,10 @@ Wants=network-online.target
 Type=simple
 User={USERNAME}
 WorkingDirectory=/home/{USERNAME}
-ExecStart={CITRASCOPE_VENV_PATH}/bin/citrascope
+ExecStart={CITRASCOPE_VENV_PATH}/bin/citrascope --web-port 80
 Restart=on-failure
+# Allow binding to privileged port 80 without running as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
 WantedBy=multi-user.target
@@ -196,8 +216,8 @@ def main():
             subprocess.run(['cp', resolv_conf, resolv_backup])
         subprocess.run(['cp', '/etc/resolv.conf', resolv_conf])
         
-        # Install Citrascope
-        install_citrascope(ROOTFS_MOUNT, HOMEDIR)
+        # Install Citrascope and get version
+        citrascope_version = install_citrascope(ROOTFS_MOUNT, HOMEDIR)
         
         # Create systemd service
         create_systemd_service(ROOTFS_MOUNT)
@@ -209,7 +229,8 @@ def main():
         if os.path.exists(resolv_backup):
             subprocess.run(['mv', resolv_backup, resolv_conf])
         
-        print("Citrascope installation completed successfully!")
+        print(f"Citrascope installation completed successfully!")
+        print(f"Installed version: {citrascope_version}")
         return True
         
     except Exception as e:

@@ -9,7 +9,7 @@ Pre-configured SD card image with Citrascope telescope control software, INDI ha
 - **User:** `citra` / `citra` (sudo enabled)
 - **Hostname:** `citrascope-{satellite}.local` - Each device gets a unique name from famous space missions (e.g., `citrascope-voyager.local`)
 - **SSH:** Enabled on port 22
-- **Citrascope:** Auto-starts on boot, web UI at port 24872
+- **Citrascope:** Auto-starts on boot, web UI at port 80
 - **WiFi Provisioning:** Captive portal for easy WiFi setup, automatic AP fallback
 - **INDI drivers:** Pre-installed for telescope/camera hardware (Citrascope starts drivers as needed)
 - **GPS Time Sync:** Automatic GPS detection for microsecond-accurate timekeeping (optional hardware)
@@ -38,12 +38,12 @@ On first boot, if not connected via Ethernet:
 ```bash
 # Replace {name} with your device's name (e.g., voyager, hubble, apollo)
 ssh citra@citrascope-{name}.local
-# Browser: http://citrascope-{name}.local:24872
+# Browser: http://citrascope-{name}.local
 ```
 
 **Via Hotspot (field use when no WiFi):**
 - Connect to WiFi: `citrascope-{name}` (password: `citra`)
-- Browser: `http://10.41.0.1:24872`
+- Browser: `http://10.41.0.1`
 
 ## Supported Hardware
 

@@ -33,7 +33,7 @@ WIFI_AP_PASSWORD = "citra"
 WIFI_AP_SSID_PREFIX = HOSTNAME_PREFIX  # Will be: citrascope-{model}-{serial}
 
 # Citrascope Configuration
-CITRASCOPE_WEB_PORT = 24872
+CITRASCOPE_WEB_PORT = 80
 CITRASCOPE_VENV_PATH = "/home/{}/".format(USERNAME) + ".citrascope_venv"
 
 # Localization Settings
