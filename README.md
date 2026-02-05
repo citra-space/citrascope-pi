@@ -151,6 +151,24 @@ The build process runs entirely in Docker:
 
 All modifications happen in the Docker container on your machine—the Pi receives a complete, pre-configured image.
 
+
+## To Ship a Release
+### Update VERSION file (optional, for documentation)
+echo "0.3" > VERSION
+git add VERSION
+git commit -m "Bump version to 0.3"
+
+### Create and push tag
+git tag v0.3
+git push origin main
+git push origin v0.3
+
+# GitHub Actions will:
+# 1. Build the image
+# 2. Compress with xz
+# 3. Create GitHub Release
+# 4. Upload citrascope-pi-v0.3.img.xz
+
 ## Resources
 
 - [Citrascope](https://github.com/citra-space/citrascope) - Telescope control software
