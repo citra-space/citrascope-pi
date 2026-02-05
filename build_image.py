@@ -322,14 +322,7 @@ def build_complete_image(base_image_path, output_path):
     print_build_summary()
 
 def main():
-    # Show banner splash
-    print("\n")
-    for line in scripts.configure_banner.CITRA_ASCII_LINES:
-        # Unescape for display (convert \\033 to \033)
-        display_line = line.replace("\\033", "\033")
-        print("  " + display_line)
-    print("\n  Let's build a CitraScope image!!\n")
-
+    
     parser = argparse.ArgumentParser(
         description='Build Raspberry Pi images with Citrascope telescope control software',
         formatter_class=argparse.RawDescriptionHelpFormatter,

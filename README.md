@@ -94,9 +94,15 @@ Want to customize the image or build from source? Read on.
 
 ```bash
 # Build image using Docker (auto-downloads Raspberry Pi OS)
-./build-docker.sh
+./build.py
 
 # Flash to SD card using Raspberry Pi Imager or Balena Etcher
+```
+
+**Optional:** Install yaspin for prettier build output with spinners:
+```bash
+pip install yaspin
+# or: pip install -r requirements-dev.txt
 ```
 
 **Note on Docker:** The build requires `--privileged` mode to access loop devices needed for mounting disk images. The container runs as your user (not root) to avoid permission issues. All dependencies (kpartx, qemu, Python) are handled inside the container—no manual installation required.
@@ -117,16 +123,14 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 
 ```bash
 # Use existing image file
-./build-docker.sh path/to/raspios.img
+./build.py path/to/raspios.img
 
 # Custom output name
-./build-docker.sh -o custom-name.img
+./build.py -o custom-name.img
 
-# Only customize base (skip Citrascope)
-./build-docker.sh existing.img --customize-only
-
-# Only install Citrascope (assumes customized)
-./build-docker.sh customized.img --citrascope-only
+# Test a built image
+./test.py                    # Tests latest *-citrascope.img
+./test.py path/to/image.img  # Test specific image
 ```
 
 ## How It Works

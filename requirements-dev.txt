@@ -1,0 +1,5 @@
+# Development dependencies for building CitraScope Pi images
+# These are only needed on the HOST machine, not in the Pi image
+
+# Spinner for prettier build output (optional but recommended)
+yaspin>=3.0.0

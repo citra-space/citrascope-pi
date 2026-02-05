@@ -136,10 +136,10 @@ def install_citrascope(rootfs_path, homedir):
                 break
         
         if version:
-            print(f"Citrascope v{version} installed successfully")
+            print(f"  ✓ Citrascope v{version} installed successfully")
             return version
         else:
-            print("Citrascope installed successfully")
+            print("  ✓ Citrascope installed successfully")
             return "unknown"
 
 def create_systemd_service(rootfs_path):
