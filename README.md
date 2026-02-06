@@ -160,17 +160,15 @@ All modifications happen in the Docker container on your machine—the Pi receiv
 Use bump-my-version to create a release:
 
 ```bash
-# Specify version
-bump-my-version bump --new-version 0.3
-
-# Or auto-increment
-bump-my-version bump minor  # 0.2 -> 0.3
+bump-my-version bump patch  # 0.1.3 → 0.1.4
+bump-my-version bump minor  # 0.1.3 → 0.2.0
+bump-my-version bump major  # 0.1.3 → 1.0.0
+git push && git push --tags
 ```
 
 This automatically:
 - Updates version in `pyproject.toml`
 - Creates commit and tag
-- Pushes to GitHub
 - Triggers GitHub Actions to build and release the image
 
 ### Versioning Strategy
