@@ -171,7 +171,23 @@ This automatically:
 - Updates VERSION file
 - Creates commit and tag
 - Pushes to GitHub
-- Triggers GitHub Actions to build and release `citrascope-pi-v{VERSION}.img.xz`
+- Triggers GitHub Actions to build and release the image
+
+### Versioning Strategy
+
+Release images use **dual versioning** to track both components:
+
+**Format:** `citrascope-pi-v{PI_VERSION}-cs{CITRASCOPE_VERSION}.img.xz`
+
+**Examples:**
+- `citrascope-pi-v0.2-cs1.3.0.img.xz` - Pi image v0.2 with Citrascope v1.3.0
+- `citrascope-pi-main-20260206-a1b2c3d-cs1.4.2.img.xz` - Dev build
+
+**What each version means:**
+- **Pi Version** (`v0.2`): Version of this repository - image configuration, WiFi provisioning, GPS setup, etc.
+- **Citrascope Version** (`cs1.3.0`): Version of the telescope control software installed from PyPI
+
+The build always installs the latest Citrascope version available at build time. Both versions are included in the filename so you know exactly what you're getting.
 
 ## Resources
 

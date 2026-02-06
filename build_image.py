@@ -7,6 +7,7 @@ Requires Python 3.10+ (uses only standard library).
 """
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,12 +16,19 @@ import urllib.request
 import lzma
 import time
 from datetime import datetime
+from dataclasses import dataclass, field
 
 # Check Python version
 if sys.version_info < (3, 10):
     print("Error: Python 3.10 or higher required", flush=True)
     print(f"Current version: {sys.version}", flush=True)
     sys.exit(1)
+
+# BuildResult dataclass for build steps that return metadata
+@dataclass
+class BuildResult:
+    success: bool
+    data: dict = field(default_factory=dict)
 
 # Add scripts directory to path
 SCRIPTS_DIR = Path(__file__).parent / "scripts"
@@ -155,8 +163,16 @@ def run_step(name, func, *args, **kwargs):
         elapsed = time.time() - start_time
         step_result['elapsed'] = elapsed
         
-        # Check if function returned False (failure)
-        if result is False:
+        # Handle both BuildResult and legacy bool returns
+        if isinstance(result, BuildResult):
+            success = result.success
+            data = result.data
+        else:
+            success = bool(result)
+            data = {}
+        
+        # Check if function failed
+        if not success:
             print(f"✗ {name} failed (took {elapsed:.1f}s)", flush=True)
             BUILD_RESULTS.append(step_result)
             sys.exit(1)
@@ -170,7 +186,7 @@ def run_step(name, func, *args, **kwargs):
         else:
             time_str = f"{elapsed:.1f}s"
         print(f"✓ {name} completed successfully (took {time_str})", flush=True)
-        return result
+        return data
     except Exception as e:
         elapsed = time.time() - start_time
         step_result['elapsed'] = elapsed
@@ -226,10 +242,15 @@ def print_build_summary():
 
 def customize_image(image_path):
     """Customize Raspberry Pi OS image with all build steps"""
+    metadata = {}
     
     with ImageMounter(image_path):
         for name, func in BUILD_STEPS:
-            run_step(name, func)
+            data = run_step(name, func)
+            if name == "Install Citrascope" and 'version' in data:
+                metadata['citrascope_version'] = data['version']
+    
+    return metadata
 
 def build_complete_image(base_image_path, output_path):
     """Build a complete Citrascope image from base Raspberry Pi OS"""
@@ -308,7 +329,22 @@ def build_complete_image(base_image_path, output_path):
     print(f"{'='*60}", flush=True)
     print(f"Customizing image...", flush=True)
     print(f"{'='*60}\n", flush=True)
-    customize_image(str(output_path))
+    metadata = customize_image(str(output_path))
+    
+    # Rename output file to include both versions if Citrascope version was captured
+    if 'citrascope_version' in metadata:
+        citrascope_version = metadata['citrascope_version']
+        image_version = os.environ.get('IMAGE_VERSION', 'dev')
+        
+        # Generate new filename with dual version
+        new_name = f"citrascope-pi-{image_version}-cs{citrascope_version}.img"
+        new_output_path = output_path.parent / new_name
+        
+        # Rename the file
+        output_path.rename(new_output_path)
+        output_path = new_output_path
+        
+        print(f"\n✓ Image renamed to include Citrascope version: {citrascope_version}", flush=True)
     
     print(f"\n{'='*60}")
     print(f"✓ BUILD COMPLETE")

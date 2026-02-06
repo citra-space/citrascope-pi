@@ -85,7 +85,7 @@ def run_build(args, log_file):
         '-v', '/dev:/dev',
         'lemon-pi-builder',
         'bash', '-c',
-        f'sudo python3 build_image.py {" ".join(args)} && sudo chown builder:builder /workspace/*-citrascope.img'
+        f'sudo python3 build_image.py {" ".join(args)} && sudo chown builder:builder /workspace/citrascope-pi-*.img'
     ]
     
     # Start subprocess

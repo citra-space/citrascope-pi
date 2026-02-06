@@ -46,27 +46,36 @@ jobs:
           -v /dev:/dev \
           -e IMAGE_VERSION="${IMAGE_VERSION}" \
           lemon-pi-builder \
-          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/citrascope-pi-\${IMAGE_VERSION}.img"
+          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/citrascope-pi-*.img"
+    
+    - name: Find generated image
+      id: find_image
+      run: |
+        # Find the generated image file (will have citrascope version in name)
+        IMAGE_FILE=$(ls citrascope-pi-*.img | head -n 1)
+        echo "Found image: ${IMAGE_FILE}"
+        echo "IMAGE_FILE=${IMAGE_FILE}" >> $GITHUB_ENV
+        echo "image_file=${IMAGE_FILE}" >> $GITHUB_OUTPUT
     
     - name: Compress image
       run: |
         echo "Compressing image with xz..."
-        xz -9 -v citrascope-pi-${IMAGE_VERSION}.img
+        xz -9 -v "${IMAGE_FILE}"
         echo "Compressed size:"
-        ls -lh citrascope-pi-${IMAGE_VERSION}.img.xz
+        ls -lh "${IMAGE_FILE}.xz"
     
     - name: Upload image artifact
       uses: actions/upload-artifact@v4
       with:
-        name: citrascope-pi-${{ env.IMAGE_VERSION }}
-        path: 'citrascope-pi-${{ env.IMAGE_VERSION }}.img.xz'
+        name: ${{ steps.find_image.outputs.image_file }}
+        path: '${{ env.IMAGE_FILE }}.xz'
         retention-days: 7
     
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
-        files: citrascope-pi-${{ env.IMAGE_VERSION }}.img.xz
+        files: ${{ env.IMAGE_FILE }}.xz
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

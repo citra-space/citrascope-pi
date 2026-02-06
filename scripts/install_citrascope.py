@@ -14,7 +14,14 @@ import os
 import sys
 import subprocess
 from contextlib import contextmanager
+from dataclasses import dataclass, field
 from config import USERNAME, CITRASCOPE_VENV_PATH, ROOTFS_MOUNT, USER_UID, USER_GID
+
+# BuildResult dataclass for returning metadata
+@dataclass
+class BuildResult:
+    success: bool
+    data: dict = field(default_factory=dict)
 
 @contextmanager
 def mount_context(rootfs_path):
@@ -201,11 +208,11 @@ def main():
     
     if not os.path.exists(ROOTFS_MOUNT):
         print(f"Error: Root filesystem path {ROOTFS_MOUNT} does not exist")
-        return False
+        return BuildResult(success=False)
     
     if not os.path.exists(HOMEDIR):
         print(f"Error: Home directory {HOMEDIR} does not exist. User must be created first.")
-        return False
+        return BuildResult(success=False)
     
     try:
         # Ensure DNS resolution works
@@ -231,11 +238,16 @@ def main():
         
         print(f"Citrascope installation completed successfully!")
         print(f"Installed version: {citrascope_version}")
-        return True
+        return BuildResult(success=True, data={'version': citrascope_version})
         
     except Exception as e:
         print(f"Error installing Citrascope: {e}")
-        return False
+        return BuildResult(success=False)
 
 if __name__ == "__main__":
-    sys.exit(0 if main() else 1)
+    result = main()
+    # Handle both BuildResult and legacy bool for backward compatibility
+    if isinstance(result, BuildResult):
+        sys.exit(0 if result.success else 1)
+    else:
+        sys.exit(0 if result else 1)
