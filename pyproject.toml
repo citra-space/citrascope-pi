@@ -1,6 +1,6 @@
 [project]
 name = "citrascope-pi"
-version = "0.4.0"
+version = "0.4.1"
 description = "Turnkey Raspberry Pi image builder for Citrascope telescope control"
 requires-python = ">=3.10"
 
@@ -11,7 +11,7 @@ dev = [
 ]
 
 [tool.bumpversion]
-current_version = "0.4.0"
+current_version = "0.4.1"
 commit = true
 tag = true
 push = true
