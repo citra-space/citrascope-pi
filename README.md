@@ -43,7 +43,6 @@ ssh citra@citrascope-{name}.local
 
 **Via Hotspot (field use when no WiFi):**
 - Connect to WiFi: `citrascope-{name}` (password: `citra`)
-- Browser: `http://10.41.0.1`
 
 ## Supported Hardware
 
@@ -72,7 +71,7 @@ ssh citra@<pi-ip>
 ```
 
 **WiFi not appearing:**
-- Wait 30-60 seconds after power-on for hotspot to start
+- Wait a couple minutes after power-on for hotspot to start
 - Check that WiFi isn't disabled in your device settings
 - Try rebooting the Pi
 
@@ -110,7 +109,8 @@ This installs yaspin (spinners) and bump-my-version (releases).
 
 **Note on Docker:** The build requires `--privileged` mode to access loop devices needed for mounting disk images. The container runs as your user (not root) to avoid permission issues. All dependencies (kpartx, qemu, Python) are handled inside the container—no manual installation required.
 
-**Build time:** 15-30 minutes. **Final image:** ~5GB.
+**Build time:** 15-30 minutes first run to build the docker layer, ~4 minutes each time after that.
+**Final image:** ~5GB.
 
 ### Configuration
 
@@ -138,7 +138,7 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 
 ## How It Works
 
-The build process runs entirely in Docker:
+The build process runs entirely in Docker via `./build.py`, which provides logging and progress output:
 
 1. **Downloads** Raspberry Pi OS Lite (Trixie ARM64, Debian 13)
 2. **Mounts** the image using loop devices (kpartx inside container)
