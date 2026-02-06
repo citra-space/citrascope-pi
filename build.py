@@ -75,7 +75,7 @@ def build_docker_image(uid, gid):
     
     print("✓ Docker image built\n")
 
-def run_build(args, log_file):
+def run_build(args, log_file, version='dev'):
     """Run the build inside Docker with spinner and logging"""
     
     # Build docker run command
@@ -83,6 +83,7 @@ def run_build(args, log_file):
         'docker', 'run', '--rm', '--privileged',
         '-v', f'{os.getcwd()}:/workspace',
         '-v', '/dev:/dev',
+        '-e', f'IMAGE_VERSION={version}',
         'lemon-pi-builder',
         'bash', '-c',
         f'sudo python3 build_image.py {" ".join(args)} && sudo chown builder:builder /workspace/citrascope-pi-*.img'
@@ -181,6 +182,18 @@ def main():
         print("  " + display_line)
     print("\n  Let's build a CitraScope image!!\n")
 
+    # Get version from bump-my-version
+    version = 'dev'  # Default fallback
+    try:
+        result = subprocess.run(
+            ['bump-my-version', 'show', 'current_version'],
+            capture_output=True, text=True, check=True
+        )
+        version = result.stdout.strip()
+        print(f"  CitraScope Pi Builder Version: {version}\n")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback if bump-my-version not installed
+        print(f"  CitraScope Pi Builder Version: {version} (dev build)\n")
 
     # Get user IDs
     uid, gid = get_user_ids()
@@ -203,7 +216,7 @@ def main():
     
     # Run the build
     print("Running image builder...\n")
-    run_build(sys.argv[1:], log_file)
+    run_build(sys.argv[1:], log_file, version)
     
     print(f"\n✓ Build complete!")
     print(f"Full log: {log_file}")
