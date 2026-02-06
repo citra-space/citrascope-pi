@@ -7,11 +7,11 @@ requires-python = ">=3.10"
 [project.optional-dependencies]
 dev = [
     "yaspin>=3.0.0",
-    "bump-my-version>=1.2.0",
+    "bump-my-version>=1.2.6",
 ]
 
 [tool.bumpversion]
-current_version = "0.2"
+current_version = "0.2.0"
 commit = true
 tag = true
 push = true
@@ -20,6 +20,4 @@ tag_message = "Release v{new_version}"
 commit_message = "Release v{new_version}"
 
 [[tool.bumpversion.files]]
-filename = "VERSION"
-search = "{current_version}"
-replace = "{new_version}"
+filename = "pyproject.toml"

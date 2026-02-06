@@ -168,7 +168,7 @@ bump-my-version bump minor  # 0.2 -> 0.3
 ```
 
 This automatically:
-- Updates VERSION file
+- Updates version in `pyproject.toml`
 - Creates commit and tag
 - Pushes to GitHub
 - Triggers GitHub Actions to build and release the image
