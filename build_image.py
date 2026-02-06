@@ -247,8 +247,13 @@ def customize_image(image_path):
     with ImageMounter(image_path):
         for name, func in BUILD_STEPS:
             data = run_step(name, func)
-            if name == "Install Citrascope" and 'version' in data:
-                metadata['citrascope_version'] = data['version']
+            if name == "Install Citrascope":
+                print(f"DEBUG: Install Citrascope returned data: {data}", flush=True)
+                if 'version' in data:
+                    metadata['citrascope_version'] = data['version']
+                    print(f"DEBUG: Captured Citrascope version: {data['version']}", flush=True)
+                else:
+                    print(f"DEBUG: No version in data dict!", flush=True)
     
     return metadata
 

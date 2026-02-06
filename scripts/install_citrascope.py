@@ -238,7 +238,13 @@ def main():
         
         print(f"Citrascope installation completed successfully!")
         print(f"Installed version: {citrascope_version}")
-        return BuildResult(success=True, data={'version': citrascope_version})
+        
+        # Only include version if we actually got one
+        if citrascope_version and citrascope_version != "unknown":
+            return BuildResult(success=True, data={'version': citrascope_version})
+        else:
+            print(f"WARNING: Could not determine Citrascope version")
+            return BuildResult(success=True)
         
     except Exception as e:
         print(f"Error installing Citrascope: {e}")
