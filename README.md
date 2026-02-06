@@ -99,11 +99,14 @@ Want to customize the image or build from source? Read on.
 # Flash to SD card using Raspberry Pi Imager or Balena Etcher
 ```
 
-**Optional:** Install yaspin for prettier build output with spinners:
+### Development Setup (one-time)
+
+Install dev dependencies for prettier build output and release automation:
 ```bash
-pip install yaspin
-# or: pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 ```
+
+This installs yaspin (spinners) and bump-my-version (releases).
 
 **Note on Docker:** The build requires `--privileged` mode to access loop devices needed for mounting disk images. The container runs as your user (not root) to avoid permission issues. All dependencies (kpartx, qemu, Python) are handled inside the container—no manual installation required.
 
@@ -154,28 +157,21 @@ All modifications happen in the Docker container on your machine—the Pi receiv
 
 ## Releasing a New Version
 
-Use the release script to automate version bumping and tagging:
+Use bump-my-version to create a release:
 
 ```bash
-# Interactive - prompts for version
-./release.py
+# Specify version
+bump-my-version bump --new-version 0.3
 
-# Or specify version directly
-./release.py 0.3
+# Or auto-increment
+bump-my-version bump minor  # 0.2 -> 0.3
 ```
 
-The script will:
-1. Validate git status is clean
-2. Update VERSION file
-3. Create commit and tag
-4. Push to GitHub
-5. Trigger GitHub Actions build
-
-GitHub Actions automatically:
-- Builds the image
-- Compresses with xz
-- Creates GitHub Release
-- Uploads `citrascope-pi-v{VERSION}.img.xz`
+This automatically:
+- Updates VERSION file
+- Creates commit and tag
+- Pushes to GitHub
+- Triggers GitHub Actions to build and release `citrascope-pi-v{VERSION}.img.xz`
 
 ## Resources
 

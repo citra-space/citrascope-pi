@@ -21,6 +21,8 @@ ENV/
 # Build artifacts
 build/
 dist/
+
+# Python package metadata (from pip install -e)
 *.egg-info/
 
 # IDE
