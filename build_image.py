@@ -16,7 +16,6 @@ import urllib.request
 import lzma
 import time
 from datetime import datetime
-from dataclasses import dataclass, field
 
 # Check Python version
 if sys.version_info < (3, 10):
@@ -24,15 +23,12 @@ if sys.version_info < (3, 10):
     print(f"Current version: {sys.version}", flush=True)
     sys.exit(1)
 
-# BuildResult dataclass for build steps that return metadata
-@dataclass
-class BuildResult:
-    success: bool
-    data: dict = field(default_factory=dict)
-
 # Add scripts directory to path
 SCRIPTS_DIR = Path(__file__).parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
+
+# Import BuildResult from shared module
+from build_result import BuildResult
 
 # Now import from scripts directory
 from scripts.config import HOSTNAME_PREFIX
@@ -164,12 +160,15 @@ def run_step(name, func, *args, **kwargs):
         step_result['elapsed'] = elapsed
         
         # Handle both BuildResult and legacy bool returns
+        print(f"DEBUG run_step: result type: {type(result)}, isinstance BuildResult: {isinstance(result, BuildResult)}", flush=True)
         if isinstance(result, BuildResult):
             success = result.success
             data = result.data
+            print(f"DEBUG run_step: Extracted success={success}, data={data}", flush=True)
         else:
             success = bool(result)
             data = {}
+            print(f"DEBUG run_step: Legacy bool path, success={success}", flush=True)
         
         # Check if function failed
         if not success:

@@ -14,14 +14,8 @@ import os
 import sys
 import subprocess
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from build_result import BuildResult
 from config import USERNAME, CITRASCOPE_VENV_PATH, ROOTFS_MOUNT, USER_UID, USER_GID
-
-# BuildResult dataclass for returning metadata
-@dataclass
-class BuildResult:
-    success: bool
-    data: dict = field(default_factory=dict)
 
 @contextmanager
 def mount_context(rootfs_path):
@@ -238,12 +232,14 @@ def main():
         
         print(f"Citrascope installation completed successfully!")
         print(f"Installed version: {citrascope_version}")
+        print(f"DEBUG: citrascope_version type: {type(citrascope_version)}, value: '{citrascope_version}', bool: {bool(citrascope_version)}")
         
         # Only include version if we actually got one
         if citrascope_version and citrascope_version != "unknown":
+            print(f"DEBUG: Returning BuildResult with version data")
             return BuildResult(success=True, data={'version': citrascope_version})
         else:
-            print(f"WARNING: Could not determine Citrascope version")
+            print(f"WARNING: Could not determine Citrascope version (got: {repr(citrascope_version)})")
             return BuildResult(success=True)
         
     except Exception as e:
