@@ -207,6 +207,8 @@ def main():
     
     print(f"\n✓ Build complete!")
     print(f"Full log: {log_file}")
+    
+    print('\a')  # Terminal bell to notify user
 
 if __name__ == '__main__':
     try:

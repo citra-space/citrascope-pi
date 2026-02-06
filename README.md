@@ -152,22 +152,30 @@ The build process runs entirely in Docker:
 All modifications happen in the Docker container on your machine—the Pi receives a complete, pre-configured image.
 
 
-## To Ship a Release
-### Update VERSION file (optional, for documentation)
-echo "0.3" > VERSION
-git add VERSION
-git commit -m "Bump version to 0.3"
+## Releasing a New Version
 
-### Create and push tag
-git tag v0.3
-git push origin main
-git push origin v0.3
+Use the release script to automate version bumping and tagging:
 
-# GitHub Actions will:
-# 1. Build the image
-# 2. Compress with xz
-# 3. Create GitHub Release
-# 4. Upload citrascope-pi-v0.3.img.xz
+```bash
+# Interactive - prompts for version
+./release.py
+
+# Or specify version directly
+./release.py 0.3
+```
+
+The script will:
+1. Validate git status is clean
+2. Update VERSION file
+3. Create commit and tag
+4. Push to GitHub
+5. Trigger GitHub Actions build
+
+GitHub Actions automatically:
+- Builds the image
+- Compresses with xz
+- Creates GitHub Release
+- Uploads `citrascope-pi-v{VERSION}.img.xz`
 
 ## Resources
 
