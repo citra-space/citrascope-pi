@@ -32,10 +32,17 @@ def find_image(specified_path=None):
             sys.exit(1)
         return image_path
     
-    # Find latest citrascope image
+    # Find latest citrascope image in images/ directory
+    images_dir = Path('images')
+    if images_dir.exists():
+        images = sorted(images_dir.glob('*.img'), key=lambda p: p.stat().st_mtime, reverse=True)
+        if images:
+            return images[0]
+    
+    # Fallback: look in root (for backward compatibility)
     images = sorted(Path('.').glob('*-citrascope.img'), key=lambda p: p.stat().st_mtime, reverse=True)
     if not images:
-        print("Error: No *-citrascope.img found. Build an image first or specify path.")
+        print("Error: No images found in images/ directory. Build an image first or specify path.")
         sys.exit(1)
     
     return images[0]
@@ -65,7 +72,7 @@ def run_tests(image_path):
     test_script = f"""
 set -e
 
-IMAGE="/workspace/{image_path.name}"
+IMAGE="/workspace/{image_path}"
 
 # Colors
 RED='\\033[0;31m'

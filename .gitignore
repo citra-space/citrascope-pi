@@ -17,6 +17,8 @@ ENV/
 *.img.zip
 *-citrascope.img
 *-customized.img
+images/*.img
+images/*.img.*
 
 # Build artifacts
 build/

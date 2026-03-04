@@ -95,6 +95,7 @@ Want to customize the image or build from source? Read on.
 # Build image using Docker (auto-downloads Raspberry Pi OS)
 ./build.py
 
+# Built images are saved in images/ directory
 # Flash to SD card using Raspberry Pi Imager or Balena Etcher
 ```
 
@@ -132,7 +133,7 @@ Edit [scripts/config.py](scripts/config.py) to customize:
 ./build.py -o custom-name.img
 
 # Test a built image
-./test.py                    # Tests latest *-citrascope.img
+./test.py                    # Tests latest image from images/ directory
 ./test.py path/to/image.img  # Test specific image
 ```
 

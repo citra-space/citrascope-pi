@@ -46,13 +46,13 @@ jobs:
           -v /dev:/dev \
           -e IMAGE_VERSION="${IMAGE_VERSION}" \
           lemon-pi-builder \
-          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/citrascope-pi-*.img"
+          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/images/*.img"
     
     - name: Find generated image
       id: find_image
       run: |
         # Find the generated image file (will have citrascope version in name)
-        IMAGE_FILE=$(ls citrascope-pi-*.img | head -n 1)
+        IMAGE_FILE=$(ls images/citrascope-pi-*.img | head -n 1)
         echo "Found image: ${IMAGE_FILE}"
         echo "IMAGE_FILE=${IMAGE_FILE}" >> $GITHUB_ENV
         echo "image_file=${IMAGE_FILE}" >> $GITHUB_OUTPUT

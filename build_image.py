@@ -258,12 +258,19 @@ def customize_image(image_path):
 
 def build_complete_image(base_image_path, output_path):
     """Build a complete Citrascope image from base Raspberry Pi OS"""
+    # Create images directory
+    images_dir = Path("images")
+    images_dir.mkdir(exist_ok=True)
+    
     # Generate default output path if not provided
     if output_path is None:
         base_path = Path(base_image_path)
-        output_path = base_path.parent / f"{base_path.stem}-citrascope{base_path.suffix}"
+        output_path = images_dir / f"{base_path.stem}-citrascope{base_path.suffix}"
     else:
         output_path = Path(output_path)
+        # If output path is relative and doesn't start with images/, put it there
+        if not output_path.is_absolute() and not str(output_path).startswith('images/'):
+            output_path = images_dir / output_path.name
     
     # Copy base image to output
     print(f"Source: {base_image_path}", flush=True)
