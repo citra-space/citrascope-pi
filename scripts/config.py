@@ -42,7 +42,7 @@ CITRASCOPE_GITHUB_REF = os.environ.get("CITRASCOPE_GITHUB_REF", "main")
 
 # Localization Settings
 LOCALE = "en_US.UTF-8"
-TIMEZONE = "America/New_York"
+TIMEZONE = "America/Denver"
 KEYBOARD_LAYOUT = "us"
 WIFI_COUNTRY = "US"  # Required for WiFi to work (regulatory compliance)
 
@@ -96,6 +96,7 @@ USER_GROUPS = [
     'sudo',      # Admin/package installation
     'video',     # Camera access
     'plugdev',   # USB devices (cameras, mounts)
+    'dialout',   # Serial ports (ttyACM*, ttyUSB*)
     'netdev',    # Network management (WiFi AP)
     'gpio',      # GPIO hardware access
     'i2c',       # I2C bus devices
@@ -105,6 +106,27 @@ USER_GROUPS = [
 # GPS Timing Configuration
 GPS_PPS_GPIO = 18  # GPIO pin for PPS signal (common convention)
 GPS_ENABLE_PRIMARY_UART = True  # Enable /dev/ttyAMA0 on GPIO 14/15 (all Pi models)
+
+# Hardware Driver Configuration
+DRIVER_LIB_DIR = "/usr/local/lib"
+UDEV_RULES_DIR = "/etc/udev/rules.d"
+
+UDEV_RULE_TEMPLATE = 'SUBSYSTEM=="usb", ATTR{{idVendor}}=="{vendor}", MODE="0666", GROUP="plugdev"'
+
+HARDWARE_DRIVERS = {
+    "moravian": {
+        "url": "https://www.gxccd.com/download?id=472&lang=409",
+        "lib_name": "libgxccd.so",
+        "usb_vendor_id": "1347",
+        "udev_rule_file": "99-moravian.rules",
+    },
+    "zwo_eaf": {
+        "url": "https://dl.zwoastro.com/software?app=DeveloperEafSdk&platform=windows86&region=Overseas",
+        "lib_name": "libEAFFocuser.so",
+        "usb_vendor_id": "03c3",
+        "udev_rule_file": "99-zwo.rules",
+    },
+}
 
 # Validate configuration to prevent shell injection
 validate_safe_string(USERNAME, "USERNAME")

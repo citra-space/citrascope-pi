@@ -230,9 +230,6 @@ def configure_gpsd(rootfs_path):
     
     # Build device list based on configuration
     devices = []
-    # USB GPS devices (common types)
-    devices.append('/dev/ttyUSB0')  # USB-to-serial GPS (FTDI, Prolific, etc.)
-    devices.append('/dev/ttyACM0')  # USB CDC ACM GPS (u-blox, etc.)
     # UART GPS devices
     if GPS_ENABLE_PRIMARY_UART:
         devices.append('/dev/ttyAMA0')  # Primary UART (all Pi models)

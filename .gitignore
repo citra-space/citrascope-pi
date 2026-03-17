@@ -23,6 +23,7 @@ images/*.img.*
 # Build artifacts
 build/
 dist/
+.cache/
 
 # Python package metadata (from pip install -e)
 *.egg-info/
