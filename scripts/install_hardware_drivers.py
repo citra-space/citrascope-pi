@@ -69,6 +69,15 @@ def _is_arm64_path(path):
     return any(part in _ARM64_DIR_NAMES for part in Path(path).parts)
 
 
+def _safe_write_member(data, filename, dest_dir):
+    """Write *data* to *dest_dir*/*filename*, rejecting path traversal."""
+    safe_name = os.path.basename(filename)
+    dest = os.path.join(dest_dir, safe_name)
+    with open(dest, "wb") as f:
+        f.write(data)
+    return dest
+
+
 def _extract_lib_from_tar(archive_path, dest_dir, lib_name):
     """Extract only *lib_name* (preferring ARM64) from a tarball. Returns extracted path or None."""
     with tarfile.open(archive_path) as tf:
@@ -78,8 +87,10 @@ def _extract_lib_from_tar(archive_path, dest_dir, lib_name):
         arm64 = [m for m in candidates if _is_arm64_path(m.name)]
         pick = arm64[0] if arm64 else candidates[0]
         print(f"  Extracting {pick.name} from {os.path.basename(archive_path)}")
-        tf.extract(pick, dest_dir)
-        return os.path.join(dest_dir, pick.name)
+        reader = tf.extractfile(pick)
+        if reader is None:
+            return None
+        return _safe_write_member(reader.read(), pick.name, dest_dir)
 
 
 def _extract_lib_from_zip(archive_path, dest_dir, lib_name):
@@ -91,8 +102,7 @@ def _extract_lib_from_zip(archive_path, dest_dir, lib_name):
         arm64 = [n for n in candidates if _is_arm64_path(n)]
         pick = arm64[0] if arm64 else candidates[0]
         print(f"  Extracting {pick} from {os.path.basename(archive_path)}")
-        zf.extract(pick, dest_dir)
-        return os.path.join(dest_dir, pick)
+        return _safe_write_member(zf.read(pick), pick, dest_dir)
 
 
 def _find_lib_in_archive(archive_path, dest_dir, lib_name):
@@ -121,10 +131,13 @@ def _extract_and_find(archive_path, dest_dir, lib_name):
     print(f"  Library not in outer archive, checking nested archives...")
     if tarfile.is_tarfile(archive_path):
         with tarfile.open(archive_path) as tf:
-            tf.extractall(dest_dir)
+            tf.extractall(dest_dir, filter="data")
     elif zipfile.is_zipfile(archive_path):
         with zipfile.ZipFile(archive_path) as zf:
-            zf.extractall(dest_dir)
+            for member in zf.namelist():
+                if ".." in member or os.path.isabs(member):
+                    continue
+                zf.extract(member, dest_dir)
 
     for root, _dirs, files in os.walk(dest_dir):
         for fname in files:

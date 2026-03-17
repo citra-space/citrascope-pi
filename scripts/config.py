@@ -121,6 +121,7 @@ HARDWARE_DRIVERS = {
         "udev_rule_file": "99-moravian.rules",
     },
     "zwo_eaf": {
+        # ZWO serves a combined SDK (all platforms) regardless of the platform parameter.
         "url": "https://dl.zwoastro.com/software?app=DeveloperEafSdk&platform=windows86&region=Overseas",
         "lib_name": "libEAFFocuser.so",
         "usb_vendor_id": "03c3",
