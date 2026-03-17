@@ -4,6 +4,15 @@ on:
   push:
     tags: [ 'v*' ]
   workflow_dispatch:
+    inputs:
+      citrascope_ref:
+        description: 'Citrascope git ref (branch, tag, or SHA)'
+        required: false
+        default: 'main'
+      citrascope_repo:
+        description: 'Citrascope git repo URL'
+        required: false
+        default: 'https://github.com/citra-space/citrascope.git'
   repository_dispatch:
     types: [upstream-release]
 
@@ -12,6 +21,8 @@ jobs:
     runs-on: ubuntu-24.04-arm
     env:
       IMAGE_VERSION: "dev"  # Default, overridden by Determine version step
+      CITRASCOPE_GITHUB_REF: ${{ inputs.citrascope_ref || github.event.client_payload.tag || 'main' }}
+      CITRASCOPE_GITHUB_REPO: ${{ inputs.citrascope_repo || 'https://github.com/citra-space/citrascope.git' }}
     
     steps:
     - name: Checkout code
@@ -45,8 +56,10 @@ jobs:
           -v "$(pwd):/workspace" \
           -v /dev:/dev \
           -e IMAGE_VERSION="${IMAGE_VERSION}" \
+          -e CITRASCOPE_GITHUB_REF="${CITRASCOPE_GITHUB_REF}" \
+          -e CITRASCOPE_GITHUB_REPO="${CITRASCOPE_GITHUB_REPO}" \
           lemon-pi-builder \
-          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && sudo chown builder:builder /workspace/images/*.img"
+          bash -c "sudo python3 build_image.py -o citrascope-pi-\${IMAGE_VERSION}.img && { sudo chown builder:builder /workspace/images/*.img 2>/dev/null || true; }"
     
     - name: Find generated image
       id: find_image

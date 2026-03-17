@@ -15,7 +15,22 @@ import sys
 import subprocess
 from contextlib import contextmanager
 from build_result import BuildResult
-from config import USERNAME, CITRASCOPE_VENV_PATH, ROOTFS_MOUNT, USER_UID, USER_GID
+from config import (
+    USERNAME, CITRASCOPE_VENV_PATH, CITRASCOPE_SOURCE_DIR,
+    ROOTFS_MOUNT, USER_UID, USER_GID,
+)
+
+# Default repo and ref — overridable via env var at call time (not import time),
+# so that build_image.py CLI args take effect even after this module is imported.
+_DEFAULT_REPO = "https://github.com/citra-space/citrascope.git"
+_DEFAULT_REF = "main"
+
+
+def _get_git_config():
+    """Read git source config from env vars, falling back to defaults."""
+    repo = os.environ.get("CITRASCOPE_GITHUB_REPO", _DEFAULT_REPO)
+    ref = os.environ.get("CITRASCOPE_GITHUB_REF", _DEFAULT_REF)
+    return repo, ref
 
 @contextmanager
 def mount_context(rootfs_path):
@@ -108,36 +123,48 @@ def install_citrascope(rootfs_path, homedir):
             python_path + ' -m venv ' + CITRASCOPE_VENV_PATH
         ], check=True)
         
-        print("Installing Citrascope with INDI support...")
-        
-        # Install citrascope[indi] in the venv
-        # Use pip directly from venv instead of sourcing activate
+        repo, ref = _get_git_config()
+        print(f"Cloning Citrascope from {repo} (ref: {ref})...")
+
+        # Clone the repo as the citra user
+        subprocess.run([
+            'chroot', rootfs_path, 'su', '-', USERNAME, '-c',
+            'git clone ' + repo + ' ' + CITRASCOPE_SOURCE_DIR
+        ], check=True)
+
+        # Check out the requested branch/tag/SHA
+        subprocess.run([
+            'chroot', rootfs_path, 'su', '-', USERNAME, '-c',
+            'git -C ' + CITRASCOPE_SOURCE_DIR + ' checkout ' + ref
+        ], check=True)
+
+        print("Installing Citrascope with INDI support (editable)...")
+
         pip_path = os.path.join(CITRASCOPE_VENV_PATH, 'bin', 'pip')
         subprocess.run([
             'chroot', rootfs_path,
             pip_path, 'install', '--upgrade', 'pip'
         ], check=True)
-        
+
         subprocess.run([
             'chroot', rootfs_path,
-            pip_path, 'install', 'citrascope[indi]'
+            pip_path, 'install', '-e', CITRASCOPE_SOURCE_DIR + '[indi]'
         ], check=True)
-        
+
         # Get installed version
         result = subprocess.run([
             'chroot', rootfs_path,
             pip_path, 'show', 'citrascope'
         ], capture_output=True, text=True, check=True)
-        
-        # Parse version from pip show output
+
         version = None
         for line in result.stdout.split('\n'):
             if line.startswith('Version:'):
                 version = line.split(':', 1)[1].strip()
                 break
-        
+
         if version:
-            print(f"  ✓ Citrascope v{version} installed successfully")
+            print(f"  ✓ Citrascope v{version} ({ref}) installed successfully")
             return version
         else:
             print("  ✓ Citrascope installed successfully")
@@ -230,17 +257,15 @@ def main():
         if os.path.exists(resolv_backup):
             subprocess.run(['mv', resolv_backup, resolv_conf])
         
+        _, ref = _get_git_config()
         print(f"Citrascope installation completed successfully!")
-        print(f"Installed version: {citrascope_version}")
-        print(f"DEBUG: citrascope_version type: {type(citrascope_version)}, value: '{citrascope_version}', bool: {bool(citrascope_version)}")
+        print(f"Installed version: {citrascope_version} (ref: {ref})")
         
-        # Only include version if we actually got one
+        data = {'ref': ref}
         if citrascope_version and citrascope_version != "unknown":
-            print(f"DEBUG: Returning BuildResult with version data")
-            return BuildResult(success=True, data={'version': citrascope_version})
-        else:
-            print(f"WARNING: Could not determine Citrascope version (got: {repr(citrascope_version)})")
-            return BuildResult(success=True)
+            data['version'] = citrascope_version
+        
+        return BuildResult(success=True, data=data)
         
     except Exception as e:
         print(f"Error installing Citrascope: {e}")

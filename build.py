@@ -51,28 +51,50 @@ def strip_ansi(text):
     """Strip ANSI escape codes from text"""
     return re.sub(r'\x1b\[[0-9;]*m', '', text)
 
+def log_line(log, line):
+    """Write a line to the log file with a timestamp prefix."""
+    ts = datetime.now().strftime('%H:%M:%S')
+    log.write(f"[{ts}] {line}")
+    log.flush()
+
+
 def get_user_ids():
     """Get current user's UID and GID"""
     uid = os.getuid()
     gid = os.getgid()
     return uid, gid
 
-def build_docker_image(uid, gid):
-    """Build the Docker image"""
+def build_docker_image(uid, gid, log_file):
+    """Build the Docker image, streaming output to the log file"""
     print("Building Docker image...")
-    result = subprocess.run([
-        'docker', 'build',
-        '--build-arg', f'USER_ID={uid}',
-        '--build-arg', f'GROUP_ID={gid}',
-        '-t', 'lemon-pi-builder',
-        '.'
-    ], capture_output=True, text=True)
-    
-    if result.returncode != 0:
-        print("✗ Docker build failed")
-        print(result.stderr)
+    with open(log_file, 'a') as log:
+        log.write(f"\n{'='*80}\n")
+        log.write(f"Docker image build started at {datetime.now()}\n")
+        log.write(f"{'='*80}\n\n")
+
+        process = subprocess.Popen(
+            [
+                'docker', 'build',
+                '--build-arg', f'USER_ID={uid}',
+                '--build-arg', f'GROUP_ID={gid}',
+                '-t', 'lemon-pi-builder',
+                '.'
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+
+        for line in process.stdout:
+            log_line(log, line)
+
+        return_code = process.wait()
+
+    if return_code != 0:
+        print(f"✗ Docker build failed (see {log_file} for details)")
         sys.exit(1)
-    
+
     print("✓ Docker image built\n")
 
 def run_build(args, log_file, version='dev'):
@@ -84,9 +106,18 @@ def run_build(args, log_file, version='dev'):
         '-v', f'{os.getcwd()}:/workspace',
         '-v', '/dev:/dev',
         '-e', f'IMAGE_VERSION={version}',
+    ]
+
+    # Forward citrascope source config into the container
+    for env_var in ('CITRASCOPE_GITHUB_REPO', 'CITRASCOPE_GITHUB_REF'):
+        val = os.environ.get(env_var)
+        if val:
+            cmd += ['-e', f'{env_var}={val}']
+
+    cmd += [
         'lemon-pi-builder',
         'bash', '-c',
-        f'sudo python3 build_image.py {" ".join(args)} && sudo chown builder:builder /workspace/images/*.img 2>/dev/null || true'
+        f'sudo python3 build_image.py {" ".join(args)} && {{ sudo chown builder:builder /workspace/images/*.img 2>/dev/null || true; }}'
     ]
     
     # Start subprocess
@@ -115,9 +146,7 @@ def run_build(args, log_file, version='dev'):
         if HAS_YASPIN:
             with yaspin(text=current_step_display, color="cyan") as sp:
                 for line in process.stdout:
-                    # Write everything to log
-                    log.write(line)
-                    log.flush()
+                    log_line(log, line)
                     
                     line_stripped = line.rstrip()
                     
@@ -150,8 +179,7 @@ def run_build(args, log_file, version='dev'):
         else:
             # Fallback without yaspin
             for line in process.stdout:
-                log.write(line)
-                log.flush()
+                log_line(log, line)
                 
                 line_stripped = line.rstrip()
                 
@@ -212,7 +240,7 @@ def main():
     print(f"Build log: {log_file}\n")
     
     # Build Docker image
-    build_docker_image(uid, gid)
+    build_docker_image(uid, gid, log_file)
     
     # Run the build
     print("Running image builder...\n")

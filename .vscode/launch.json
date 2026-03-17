@@ -2,14 +2,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Build Image (Full)",
+            "name": "Build Image (main)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/build_image.py",
+            "program": "${workspaceFolder}/build.py",
             "console": "integratedTerminal",
-            "sudo": true,
             "cwd": "${workspaceFolder}",
             "justMyCode": false
+        },
+        {
+            "name": "Build Image (custom ref)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/build.py",
+            "args": ["--citrascope-ref", "${input:citrascope_ref}"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        }
+    ],
+    "inputs": [
+        {
+            "id": "citrascope_ref",
+            "type": "promptString",
+            "description": "Git branch, tag, or commit SHA",
+            "default": "main"
         }
     ]
 }

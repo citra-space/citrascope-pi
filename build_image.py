@@ -62,7 +62,7 @@ BUILD_STEPS = [
 # Check https://www.raspberrypi.com/software/operating-systems/ for current version
 RASPIOS_URL = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2025-12-04/2025-12-04-raspios-trixie-arm64-lite.img.xz"
 
-def download_raspios(output_dir="."):
+def download_raspios(output_dir="images"):
     """Download and extract the latest Raspberry Pi OS Lite image"""
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -247,12 +247,10 @@ def customize_image(image_path):
         for name, func in BUILD_STEPS:
             data = run_step(name, func)
             if name == "Install Citrascope":
-                print(f"DEBUG: Install Citrascope returned data: {data}", flush=True)
                 if 'version' in data:
                     metadata['citrascope_version'] = data['version']
-                    print(f"DEBUG: Captured Citrascope version: {data['version']}", flush=True)
-                else:
-                    print(f"DEBUG: No version in data dict!", flush=True)
+                if 'ref' in data:
+                    metadata['citrascope_ref'] = data['ref']
     
     return metadata
 
@@ -288,7 +286,7 @@ def build_complete_image(base_image_path, output_path):
     print(f"Expanding image to accommodate packages...", flush=True)
     expand_start = time.time()
     current_size = output_path.stat().st_size
-    additional_space = 2 * 1024 * 1024 * 1024  # 2GB
+    additional_space = 3 * 1024 * 1024 * 1024  # 3GB
     new_size = current_size + additional_space
     
     # Truncate extends the file
@@ -342,20 +340,22 @@ def build_complete_image(base_image_path, output_path):
     print(f"{'='*60}\n", flush=True)
     metadata = customize_image(str(output_path))
     
-    # Rename output file to include both versions if Citrascope version was captured
-    if 'citrascope_version' in metadata:
-        citrascope_version = metadata['citrascope_version']
-        image_version = os.environ.get('IMAGE_VERSION', 'dev')
-        
-        # Generate new filename with dual version
+    # Rename output file: include citrascope version only for tagged releases
+    image_version = os.environ.get('IMAGE_VERSION', 'dev')
+    citrascope_version = metadata.get('citrascope_version')
+    citrascope_ref = metadata.get('citrascope_ref', 'main')
+    is_release = image_version.startswith('v')
+
+    if is_release and citrascope_version:
         new_name = f"citrascope-pi-{image_version}-cs{citrascope_version}.img"
-        new_output_path = output_path.parent / new_name
-        
-        # Rename the file
-        output_path.rename(new_output_path)
-        output_path = new_output_path
-        
-        print(f"\n✓ Image renamed to include Citrascope version: {citrascope_version}", flush=True)
+    else:
+        new_name = f"citrascope-pi-{image_version}-{citrascope_ref}.img"
+
+    new_output_path = output_path.parent / new_name
+    output_path.rename(new_output_path)
+    output_path = new_output_path
+
+    print(f"\n✓ Image: {new_name}", flush=True)
     
     print(f"\n{'='*60}")
     print(f"✓ BUILD COMPLETE")
@@ -375,21 +375,34 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Build complete image (auto-downloads if needed)
+  # Build complete image (auto-downloads if needed, uses main branch)
   sudo ./build_image.py
 
-  # Build from existing image
-  sudo ./build_image.py raspios-bookworm-arm64-lite.img
+  # Build from a specific branch
+  sudo ./build_image.py --citrascope-ref feature-calibration
 
-  # Build with custom output name
-  sudo ./build_image.py -o citrascope-v1.0.img
+  # Build from a specific release tag
+  sudo ./build_image.py --citrascope-ref v0.12.0
+
+  # Build from a fork
+  sudo ./build_image.py --citrascope-repo https://github.com/user/citrascope.git
+
+  # Build from existing image with custom output name
+  sudo ./build_image.py raspios-bookworm-arm64-lite.img -o citrascope-v1.0.img
         """
     )
     
     parser.add_argument('image', nargs='?', help='Path to Raspberry Pi OS image file (auto-downloads if not provided)')
     parser.add_argument('-o', '--output', help='Output image path (default: adds -citrascope suffix)')
+    parser.add_argument('--citrascope-ref', help='Git branch, tag, or commit SHA to install (default: main)')
+    parser.add_argument('--citrascope-repo', help='Git repo URL for Citrascope (default: citra-space/citrascope)')
     
     args = parser.parse_args()
+    
+    if args.citrascope_ref:
+        os.environ['CITRASCOPE_GITHUB_REF'] = args.citrascope_ref
+    if args.citrascope_repo:
+        os.environ['CITRASCOPE_GITHUB_REPO'] = args.citrascope_repo
     
     try:
         # Check if running as root
