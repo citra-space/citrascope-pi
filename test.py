@@ -139,6 +139,10 @@ run_test "Citrascope service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/mu
 run_test "Comitup config exists" "[ -f '$ROOTFS_MOUNT/etc/comitup.conf' ]"
 run_test "Comitup service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/multi-user.target.wants/comitup.service' ]"
 run_test "Login banner installed" "[ -f '$ROOTFS_MOUNT/etc/profile.d/citrascope-banner.sh' ]"
+run_test "Moravian library installed" "[ -f '$ROOTFS_MOUNT/usr/local/lib/libgxccd.so' ]"
+run_test "ZWO EAF library installed" "[ -f '$ROOTFS_MOUNT/usr/local/lib/libEAFFocuser.so' ]"
+run_test "Moravian udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-moravian.rules' ]"
+run_test "ZWO udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-zwo.rules' ]"
 
 # Summary
 echo ""

@@ -148,7 +148,7 @@ def install_citrascope(rootfs_path, homedir):
 
         subprocess.run([
             'chroot', rootfs_path,
-            pip_path, 'install', '-e', CITRASCOPE_SOURCE_DIR + '[indi]'
+            pip_path, 'install', '-e', CITRASCOPE_SOURCE_DIR + '[indi,zwo-mount]'
         ], check=True)
 
         # Get installed version

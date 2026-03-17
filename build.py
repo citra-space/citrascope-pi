@@ -196,7 +196,7 @@ def run_build(args, log_file, version='dev'):
     return_code = process.wait()
     
     if return_code != 0:
-        print(f"\n✗ Build failed with exit code {return_code}")
+        print(f"\n✗ Build failed during: {current_step}")
         print(f"See {log_file} for details")
         sys.exit(return_code)
 
