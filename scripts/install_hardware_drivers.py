@@ -152,8 +152,13 @@ def _extract_and_find(archive_path, dest_dir, lib_name):
     return None
 
 
-def _install_library(so_path, lib_name, rootfs_path):
-    """Copy *so_path* into the rootfs lib dir, creating a symlink if versioned."""
+def _install_library(so_path, lib_name, rootfs_path, add_needed=None):
+    """Copy *so_path* into the rootfs lib dir, creating a symlink if versioned.
+
+    If *add_needed* is provided, uses ``patchelf --add-needed`` to inject
+    missing DT_NEEDED entries (works around vendor SDKs that forget to link
+    against libraries they actually use at runtime).
+    """
     lib_dir = os.path.join(rootfs_path, DRIVER_LIB_DIR.lstrip("/"))
     os.makedirs(lib_dir, exist_ok=True)
 
@@ -170,6 +175,10 @@ def _install_library(so_path, lib_name, rootfs_path):
             os.remove(link)
         os.symlink(basename, link)
         print(f"  Symlinked {lib_name} -> {basename}")
+
+    for needed in add_needed or []:
+        print(f"  Patching {basename}: adding DT_NEEDED {needed}")
+        subprocess.run(["patchelf", "--add-needed", needed, dest], check=True)
 
 
 def _install_udev_rule(vendor_id, rule_file, rootfs_path):
@@ -211,7 +220,7 @@ def install_driver(name, driver_cfg, rootfs_path, tmp_dir):
         print(f"  ERROR: could not find {lib_name} in downloaded SDK")
         return False
 
-    _install_library(so_path, lib_name, rootfs_path)
+    _install_library(so_path, lib_name, rootfs_path, add_needed=driver_cfg.get("add_needed"))
     _install_udev_rule(driver_cfg["usb_vendor_id"], driver_cfg["udev_rule_file"], rootfs_path)
     return True
 

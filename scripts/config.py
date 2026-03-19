@@ -84,6 +84,9 @@ SYSTEM_PACKAGES = [
     'libharfbuzz-dev',  # Needed for Pillow text rendering
     'libfribidi-dev',  # Needed for Pillow bidirectional text
     'libxcb1-dev',  # Needed for Pillow X11 support
+    # Runtime dependencies for hardware driver SDKs
+    'libudev-dev',  # Needed by ZWO EAF SDK (libEAFFocuser.so)
+    'patchelf',  # Fixes missing DT_NEEDED entries in vendor SDKs
     # GPS Time Synchronization
     'chrony',  # Modern NTP daemon with GPS support
     'gpsd',  # GPS daemon for hardware abstraction
@@ -126,6 +129,8 @@ HARDWARE_DRIVERS = {
         "lib_name": "libEAFFocuser.so",
         "usb_vendor_id": "03c3",
         "udev_rule_file": "99-zwo.rules",
+        # ZWO forgot to link against libudev — patchelf adds the missing DT_NEEDED entry.
+        "add_needed": ["libudev.so.1"],
     },
 }
 

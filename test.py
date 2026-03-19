@@ -141,6 +141,8 @@ run_test "Comitup service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/multi
 run_test "Login banner installed" "[ -f '$ROOTFS_MOUNT/etc/profile.d/citrascope-banner.sh' ]"
 run_test "Moravian library installed" "[ -f '$ROOTFS_MOUNT/usr/local/lib/libgxccd.so' ]"
 run_test "ZWO EAF library installed" "[ -f '$ROOTFS_MOUNT/usr/local/lib/libEAFFocuser.so' ]"
+run_test "ZWO EAF library links correctly" "sudo chroot '$ROOTFS_MOUNT' /bin/sh -c 'ldconfig -p | grep -q libEAFFocuser'"
+run_test "Moravian library links correctly" "sudo chroot '$ROOTFS_MOUNT' /bin/sh -c 'ldconfig -p | grep -q libgxccd'"
 run_test "Moravian udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-moravian.rules' ]"
 run_test "ZWO udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-zwo.rules' ]"
 
