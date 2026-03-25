@@ -114,7 +114,10 @@ GPS_ENABLE_PRIMARY_UART = True  # Enable /dev/ttyAMA0 on GPIO 14/15 (all Pi mode
 DRIVER_LIB_DIR = "/usr/local/lib"
 UDEV_RULES_DIR = "/etc/udev/rules.d"
 
-UDEV_RULE_TEMPLATE = 'SUBSYSTEM=="usb", ATTR{{idVendor}}=="{vendor}", MODE="0666", GROUP="plugdev"'
+UDEV_RULE_TEMPLATE = (
+    'SUBSYSTEM=="usb", ATTR{{idVendor}}=="{vendor}", MODE="0666", GROUP="plugdev"\n'
+    'KERNEL=="hidraw*", ATTRS{{idVendor}}=="{vendor}", MODE="0666", GROUP="plugdev"'
+)
 
 HARDWARE_DRIVERS = {
     "moravian": {

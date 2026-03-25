@@ -145,6 +145,7 @@ run_test "ZWO EAF library links correctly" "sudo chroot '$ROOTFS_MOUNT' /bin/sh 
 run_test "Moravian library links correctly" "sudo chroot '$ROOTFS_MOUNT' /bin/sh -c 'ldconfig -p | grep -q libgxccd'"
 run_test "Moravian udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-moravian.rules' ]"
 run_test "ZWO udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-zwo.rules' ]"
+run_test "ZWO udev rule covers hidraw" "grep -q 'hidraw' '$ROOTFS_MOUNT/etc/udev/rules.d/99-zwo.rules'"
 
 # Summary
 echo ""
