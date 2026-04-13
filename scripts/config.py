@@ -92,6 +92,9 @@ SYSTEM_PACKAGES = [
     'gpsd',  # GPS daemon for hardware abstraction
     'gpsd-clients',  # GPS testing tools (cgps, gpsmon)
     'pps-tools',  # PPS debugging utilities (ppstest)
+    # Plate solving (astrometry.net)
+    'astrometry.net',              # solve-field binary
+    'astrometry-data-tycho2',      # Tycho-2 star catalog index files
 ]
 
 # User Groups (in addition to primary group)

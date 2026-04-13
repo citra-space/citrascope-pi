@@ -146,6 +146,8 @@ run_test "Moravian library links correctly" "sudo chroot '$ROOTFS_MOUNT' /bin/sh
 run_test "Moravian udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-moravian.rules' ]"
 run_test "ZWO udev rule installed" "[ -f '$ROOTFS_MOUNT/etc/udev/rules.d/99-zwo.rules' ]"
 run_test "ZWO udev rule covers hidraw" "grep -q 'hidraw' '$ROOTFS_MOUNT/etc/udev/rules.d/99-zwo.rules'"
+run_test "solve-field binary installed" "sudo chroot '$ROOTFS_MOUNT' which solve-field"
+run_test "Astrometry index files installed" "ls '$ROOTFS_MOUNT/usr/share/astrometry/'*.fits 2>/dev/null | grep -q fits"
 
 # Summary
 echo ""
