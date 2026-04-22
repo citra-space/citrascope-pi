@@ -26,19 +26,19 @@ USER_UID = 1001
 USER_GID = 1001
 
 # Hostname and Network
-HOSTNAME_PREFIX = "citrascope"  # Prefix for dynamic hostname: {prefix}-{model}-{serial}
+HOSTNAME_PREFIX = "citrasense"  # Prefix for dynamic hostname: {prefix}-{model}-{serial}
 MDNS_DOMAIN = f"{HOSTNAME_PREFIX}.local"
 
 # WiFi Access Point Configuration
 WIFI_AP_PASSWORD = "citra"
-WIFI_AP_SSID_PREFIX = HOSTNAME_PREFIX  # Will be: citrascope-{model}-{serial}
+WIFI_AP_SSID_PREFIX = HOSTNAME_PREFIX  # Will be: citrasense-{model}-{serial}
 
-# Citrascope Configuration
-CITRASCOPE_WEB_PORT = 80
-CITRASCOPE_VENV_PATH = "/home/{}/".format(USERNAME) + ".citrascope_venv"
-CITRASCOPE_SOURCE_DIR = "/home/{}/citrascope".format(USERNAME)
-CITRASCOPE_GITHUB_REPO = os.environ.get("CITRASCOPE_GITHUB_REPO", "https://github.com/citra-space/citrascope.git")
-CITRASCOPE_GITHUB_REF = os.environ.get("CITRASCOPE_GITHUB_REF", "main")
+# Citrasense Configuration
+CITRASENSE_WEB_PORT = 80
+CITRASENSE_VENV_PATH = "/home/{}/".format(USERNAME) + ".citrasense_venv"
+CITRASENSE_SOURCE_DIR = "/home/{}/citrasense".format(USERNAME)
+CITRASENSE_GITHUB_REPO = os.environ.get("CITRASENSE_GITHUB_REPO", "https://github.com/citra-space/citrasense.git")
+CITRASENSE_GITHUB_REF = os.environ.get("CITRASENSE_GITHUB_REF", "main")
 
 # Localization Settings
 LOCALE = "en_US.UTF-8"
@@ -145,7 +145,7 @@ validate_safe_string(USERNAME, "USERNAME")
 validate_safe_string(HOSTNAME_PREFIX, "HOSTNAME_PREFIX")
 validate_safe_string(WIFI_AP_PASSWORD, "WIFI_AP_PASSWORD")
 validate_safe_string(WIFI_AP_SSID_PREFIX, "WIFI_AP_SSID_PREFIX")
-validate_safe_string(CITRASCOPE_VENV_PATH, "CITRASCOPE_VENV_PATH")
-validate_safe_string(CITRASCOPE_SOURCE_DIR, "CITRASCOPE_SOURCE_DIR")
-validate_safe_string(CITRASCOPE_GITHUB_REPO, "CITRASCOPE_GITHUB_REPO")
-validate_safe_string(CITRASCOPE_GITHUB_REF, "CITRASCOPE_GITHUB_REF")
+validate_safe_string(CITRASENSE_VENV_PATH, "CITRASENSE_VENV_PATH")
+validate_safe_string(CITRASENSE_SOURCE_DIR, "CITRASENSE_SOURCE_DIR")
+validate_safe_string(CITRASENSE_GITHUB_REPO, "CITRASENSE_GITHUB_REPO")
+validate_safe_string(CITRASENSE_GITHUB_REF, "CITRASENSE_GITHUB_REF")

@@ -73,7 +73,7 @@ def update_system(rootfs_path):
                 'apt-get', 'upgrade', '-y'
             ], check=True)
 
-            # Install essential packages for Citrascope
+            # Install essential packages for Citrasense
             subprocess.run([
                 'chroot', rootfs_path,
                 'apt-get', 'install', '-y'

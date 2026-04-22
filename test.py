@@ -32,7 +32,7 @@ def find_image(specified_path=None):
             sys.exit(1)
         return image_path
     
-    # Find latest citrascope image in images/ directory
+    # Find latest citrasense image in images/ directory
     images_dir = Path('images')
     if images_dir.exists():
         images = sorted(images_dir.glob('*.img'), key=lambda p: p.stat().st_mtime, reverse=True)
@@ -40,7 +40,7 @@ def find_image(specified_path=None):
             return images[0]
     
     # Fallback: look in root (for backward compatibility)
-    images = sorted(Path('.').glob('*-citrascope.img'), key=lambda p: p.stat().st_mtime, reverse=True)
+    images = sorted(Path('.').glob('*-citrasense.img'), key=lambda p: p.stat().st_mtime, reverse=True)
     if not images:
         print("Error: No images found in images/ directory. Build an image first or specify path.")
         sys.exit(1)
@@ -132,13 +132,13 @@ run_test "User has correct UID (1001)" "grep '^citra:' '$ROOTFS_MOUNT/etc/passwd
 run_test "User in sudo group" "grep '^sudo:' '$ROOTFS_MOUNT/etc/group' | grep -q 'citra'"
 run_test "SSH service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/multi-user.target.wants/ssh.service' ]"
 run_test "Hostname set" "[ -f '$ROOTFS_MOUNT/etc/hostname' ]"
-run_test "Citrascope venv exists" "[ -d '$ROOTFS_MOUNT/home/citra/.citrascope_venv' ]"
-run_test "Citrascope binary exists" "[ -f '$ROOTFS_MOUNT/home/citra/.citrascope_venv/bin/citrascope' ]"
-run_test "Citrascope service exists" "[ -f '$ROOTFS_MOUNT/etc/systemd/system/citrascope.service' ]"
-run_test "Citrascope service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/multi-user.target.wants/citrascope.service' ]"
+run_test "Citrasense venv exists" "[ -d '$ROOTFS_MOUNT/home/citra/.citrasense_venv' ]"
+run_test "Citrasense binary exists" "[ -f '$ROOTFS_MOUNT/home/citra/.citrasense_venv/bin/citrasense' ]"
+run_test "Citrasense service exists" "[ -f '$ROOTFS_MOUNT/etc/systemd/system/citrasense.service' ]"
+run_test "Citrasense service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/multi-user.target.wants/citrasense.service' ]"
 run_test "Comitup config exists" "[ -f '$ROOTFS_MOUNT/etc/comitup.conf' ]"
 run_test "Comitup service enabled" "[ -e '$ROOTFS_MOUNT/etc/systemd/system/multi-user.target.wants/comitup.service' ]"
-run_test "Login banner installed" "[ -f '$ROOTFS_MOUNT/etc/profile.d/citrascope-banner.sh' ]"
+run_test "Login banner installed" "[ -f '$ROOTFS_MOUNT/etc/profile.d/citrasense-banner.sh' ]"
 run_test "Moravian library installed" "[ -f '$ROOTFS_MOUNT/usr/local/lib/libgxccd.so' ]"
 run_test "ZWO EAF library installed" "[ -f '$ROOTFS_MOUNT/usr/local/lib/libEAFFocuser.so' ]"
 run_test "ZWO EAF library links correctly" "sudo chroot '$ROOTFS_MOUNT' /bin/sh -c 'ldconfig -p | grep -q libEAFFocuser'"

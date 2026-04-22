@@ -15,7 +15,7 @@ ENV/
 *.img.xz
 *.img.gz
 *.img.zip
-*-citrascope.img
+*-citrasense.img
 *-customized.img
 images/*.img
 images/*.img.*

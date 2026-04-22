@@ -13,9 +13,9 @@ IDENTITY_SCRIPT = """#!/bin/bash
 
 set -e
 
-MARKER_FILE="/var/lib/citrascope-identity-set"
-NAME_FILE="/etc/citrascope-name"
-PREFIX_FILE="/etc/citrascope-prefix"
+MARKER_FILE="/var/lib/citrasense-identity-set"
+NAME_FILE="/etc/citrasense-name"
+PREFIX_FILE="/etc/citrasense-prefix"
 
 # Exit if already run
 if [ -f "$MARKER_FILE" ]; then
@@ -64,7 +64,7 @@ echo "$DEVICE_NAME" > "$NAME_FILE"
 
 # Set hostname immediately (log if it fails)
 if ! hostnamectl set-hostname "$DEVICE_NAME" 2>&1; then
-    echo "hostnamectl failed (dbus not ready?), hostname set via files" | logger -t citrascope-identity
+    echo "hostnamectl failed (dbus not ready?), hostname set via files" | logger -t citrasense-identity
 fi
 
 # Create marker file so we don't run again
@@ -76,17 +76,17 @@ echo "Device identity set to: $DEVICE_NAME"
 
 # Systemd service file
 IDENTITY_SERVICE = """[Unit]
-Description=Generate CitraScope device identity
+Description=Generate CitraSense device identity
 Documentation=https://github.com/citra-space/lemon-pi
 DefaultDependencies=no
 After=local-fs.target dbus.service
 Before=avahi-daemon.service NetworkManager.service comitup.service
 Requires=dbus.service
-ConditionPathExists=!/var/lib/citrascope-identity-set
+ConditionPathExists=!/var/lib/citrasense-identity-set
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/generate-citrascope-identity
+ExecStart=/usr/local/bin/generate-citrasense-identity
 RemainAfterExit=yes
 
 [Install]
@@ -99,10 +99,10 @@ def install_identity_system():
     
     print("Installing dynamic identity system...")
     
-    # Set initial hostname to "citrascope" (will be updated on first boot)
+    # Set initial hostname to "citrasense" (will be updated on first boot)
     hostname_file = Path(ROOTFS_MOUNT) / 'etc/hostname'
-    hostname_file.write_text("citrascope\n")
-    print(f"  ✓ Set initial hostname to 'citrascope'")
+    hostname_file.write_text("citrasense\n")
+    print(f"  ✓ Set initial hostname to 'citrasense'")
     
     # Update /etc/hosts
     hosts_file = Path(ROOTFS_MOUNT) / 'etc/hosts'
@@ -110,17 +110,17 @@ def install_identity_system():
         content = hosts_file.read_text()
         # Replace 127.0.1.1 line
         import re
-        content = re.sub(r'^127\.0\.1\.1.*$', '127.0.1.1\tcitrascope', content, flags=re.MULTILINE)
+        content = re.sub(r'^127\.0\.1\.1.*$', '127.0.1.1\tcitrasense', content, flags=re.MULTILINE)
         hosts_file.write_text(content)
     print(f"  ✓ Updated /etc/hosts")
     
     # Write prefix to config file on Pi
-    prefix_file = Path(ROOTFS_MOUNT) / 'etc/citrascope-prefix'
+    prefix_file = Path(ROOTFS_MOUNT) / 'etc/citrasense-prefix'
     prefix_file.write_text(HOSTNAME_PREFIX)
     print(f"  ✓ Set hostname prefix: '{HOSTNAME_PREFIX}'")
     
     # Write identity generation script
-    script_dst = Path(ROOTFS_MOUNT) / 'usr/local/bin/generate-citrascope-identity'
+    script_dst = Path(ROOTFS_MOUNT) / 'usr/local/bin/generate-citrasense-identity'
     script_dst.parent.mkdir(parents=True, exist_ok=True)
     script_dst.write_text(IDENTITY_SCRIPT)
     
@@ -129,7 +129,7 @@ def install_identity_system():
     print(f"  ✓ Installed identity script to /usr/local/bin/")
     
     # Write systemd service
-    service_dst = Path(ROOTFS_MOUNT) / 'etc/systemd/system/citrascope-identity.service'
+    service_dst = Path(ROOTFS_MOUNT) / 'etc/systemd/system/citrasense-identity.service'
     service_dst.parent.mkdir(parents=True, exist_ok=True)
     service_dst.write_text(IDENTITY_SERVICE)
     print(f"  ✓ Installed systemd service")
@@ -138,12 +138,12 @@ def install_identity_system():
     wants_dir = Path(ROOTFS_MOUNT) / 'etc/systemd/system/multi-user.target.wants'
     wants_dir.mkdir(parents=True, exist_ok=True)
     
-    service_link = wants_dir / 'citrascope-identity.service'
+    service_link = wants_dir / 'citrasense-identity.service'
     if service_link.exists() or service_link.is_symlink():
         service_link.unlink()
     
-    service_link.symlink_to('/etc/systemd/system/citrascope-identity.service')
-    print(f"  ✓ Enabled citrascope-identity.service")
+    service_link.symlink_to('/etc/systemd/system/citrasense-identity.service')
+    print(f"  ✓ Enabled citrasense-identity.service")
     
     return True
 

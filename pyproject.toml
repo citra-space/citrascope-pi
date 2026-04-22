@@ -1,7 +1,7 @@
 [project]
-name = "citrascope-pi"
+name = "citrasense-pi"
 version = "0.4.1"
-description = "Turnkey Raspberry Pi image builder for Citrascope telescope control"
+description = "Turnkey Raspberry Pi image builder for Citrasense telescope control"
 requires-python = ">=3.10"
 
 [project.optional-dependencies]
