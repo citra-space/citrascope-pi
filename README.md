@@ -1,17 +1,17 @@
-# CitraScope Pi
+# CitraSense Pi
 
-Turnkey Raspberry Pi image for telescope operations with [Citrascope](https://github.com/citra-space/citrascope).
+Turnkey Raspberry Pi image for telescope operations with [Citrasense](https://github.com/citra-space/citrasense).
 
-Pre-configured SD card image with Citrascope telescope control software, INDI hardware support, and automatic WiFi provisioning.
+Pre-configured SD card image with Citrasense telescope control software, INDI hardware support, and automatic WiFi provisioning.
 
 ## What You Get
 
 - **User:** `citra` / `citra` (sudo enabled)
-- **Hostname:** `citrascope-{satellite}.local` - Each device gets a unique name from famous space missions (e.g., `citrascope-voyager.local`)
+- **Hostname:** `citrasense-{satellite}.local` - Each device gets a unique name from famous space missions (e.g., `citrasense-voyager.local`)
 - **SSH:** Enabled on port 22
-- **Citrascope:** Auto-starts on boot, web UI at port 80
+- **Citrasense:** Auto-starts on boot, web UI at port 80
 - **WiFi Provisioning:** Captive portal for easy WiFi setup, automatic AP fallback
-- **INDI drivers:** Pre-installed for telescope/camera hardware (Citrascope starts drivers as needed)
+- **INDI drivers:** Pre-installed for telescope/camera hardware (Citrasense starts drivers as needed)
 - **GPS Time Sync:** Automatic GPS detection for microsecond-accurate timekeeping (optional hardware)
 
 **Note:** Your device's unique name (like "voyager", "hubble", or "apollo") is randomly assigned on first boot and appears as both the WiFi access point name and the network hostname.
@@ -22,13 +22,13 @@ Pre-configured SD card image with Citrascope telescope control software, INDI ha
 
 On first boot, if not connected via Ethernet:
 
-1. **Pi creates WiFi hotspot:** Look for `citrascope-{name}` in your WiFi list (e.g., `citrascope-voyager`, `citrascope-hubble`)
+1. **Pi creates WiFi hotspot:** Look for `citrasense-{name}` in your WiFi list (e.g., `citrasense-voyager`, `citrasense-hubble`)
 2. **Connect with your phone/laptop** using password: `citra`
 3. **Captive portal appears automatically** showing available WiFi networks
 4. **Select your network** and enter password
 5. **Pi connects to your WiFi** and disables the hotspot
 
-**Your device's unique name** (the part after "citrascope-") is randomly selected from famous space missions and stays the same forever. Remember it—that's how you'll find your device on the network!
+**Your device's unique name** (the part after "citrasense-") is randomly selected from famous space missions and stays the same forever. Remember it—that's how you'll find your device on the network!
 
 **Automatic Fallback:** If your WiFi becomes unavailable (field use, power outage), the Pi automatically re-enables the hotspot so you can always connect.
 
@@ -37,19 +37,19 @@ On first boot, if not connected via Ethernet:
 **Via Network:**
 ```bash
 # Replace {name} with your device's name (e.g., voyager, hubble, apollo)
-ssh citra@citrascope-{name}.local
-# Browser: http://citrascope-{name}.local
+ssh citra@citrasense-{name}.local
+# Browser: http://citrasense-{name}.local
 ```
 
 **Via Hotspot (field use when no WiFi):**
-- Connect to WiFi: `citrascope-{name}` (password: `citra`)
+- Connect to WiFi: `citrasense-{name}` (password: `citra`)
 
 ## Supported Hardware
 
 - **Pi Models:** Raspberry Pi 4 (2GB+), Pi 5
 - **Cameras:** ZWO ASI, Pi HQ Camera, USB cameras
 - **Mounts:** INDI-compatible telescope mounts
-- See [Citrascope docs](https://docs.citra.space/citrascope/) for full hardware support
+- See [Citrasense docs](https://docs.citra.space/citrasense/) for full hardware support
 
 ## GPS Support (Optional)
 
@@ -63,7 +63,7 @@ See [scripts/configure_gps_timing.py](scripts/configure_gps_timing.py) for GPIO 
 
 ## Troubleshooting
 
-**Can't connect to citrascope-{name}.local:**
+**Can't connect to citrasense-{name}.local:**
 ```bash
 # Find IP address and connect directly
 ssh citra@<pi-ip>
@@ -149,7 +149,7 @@ The build process runs entirely in Docker via `./build.py`, which provides loggi
    - Enables SSH and WiFi
    - Installs system packages (INDI, Python, build tools, GPS timing)
 4. **Configures** GPS time synchronization with automatic hardware detection
-5. **Installs** Citrascope in Python venv with systemd service
+5. **Installs** Citrasense in Python venv with systemd service
 6. **Configures** Comitup for WiFi provisioning with automatic AP fallback
 7. **Unmounts** and outputs ready-to-flash image
 
@@ -176,21 +176,21 @@ This automatically:
 
 Release images use **dual versioning** to track both components:
 
-**Format:** `citrascope-pi-v{PI_VERSION}-cs{CITRASCOPE_VERSION}.img.xz`
+**Format:** `citrasense-pi-v{PI_VERSION}-cs{CITRASENSE_VERSION}.img.xz`
 
 **Examples:**
-- `citrascope-pi-v0.2-cs1.3.0.img.xz` - Pi image v0.2 with Citrascope v1.3.0
-- `citrascope-pi-main-20260206-a1b2c3d-cs1.4.2.img.xz` - Dev build
+- `citrasense-pi-v0.2-cs1.3.0.img.xz` - Pi image v0.2 with Citrasense v1.3.0
+- `citrasense-pi-main-20260206-a1b2c3d-cs1.4.2.img.xz` - Dev build
 
 **What each version means:**
 - **Pi Version** (`v0.2`): Version of this repository - image configuration, WiFi provisioning, GPS setup, etc.
-- **Citrascope Version** (`cs1.3.0`): Version of the telescope control software installed from PyPI
+- **Citrasense Version** (`cs1.3.0`): Version of the telescope control software installed from PyPI
 
-The build always installs the latest Citrascope version available at build time. Both versions are included in the filename so you know exactly what you're getting.
+The build always installs the latest Citrasense version available at build time. Both versions are included in the filename so you know exactly what you're getting.
 
 ## Resources
 
-- [Citrascope](https://github.com/citra-space/citrascope) - Telescope control software
+- [Citrasense](https://github.com/citra-space/citrasense) - Telescope control software
 - [Citra.space](https://citra.space/) - Project website
 - [INDI Library](https://www.indilib.org/) - Hardware control protocol
 

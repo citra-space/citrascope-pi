@@ -12,7 +12,7 @@ def configure_comitup(rootfs_path):
     config = f"""# Comitup configuration
 ap_name: {WIFI_AP_SSID_PREFIX}
 ap_password: {WIFI_AP_PASSWORD}
-web_service: citrascope.service
+web_service: citrasense.service
 enable_appliance_mode: true
 """
     (Path(rootfs_path) / 'etc/comitup.conf').write_text(config)
@@ -65,7 +65,7 @@ def customize_comitup_logo(rootfs_path):
     # Replace the UIkit icon with our base64 image
     # Original: <span class="" uk-icon="icon: world; ratio: 5"></span>
     pattern = r'<span class="" uk-icon="icon: world; ratio: 5"></span>'
-    replacement = f'<img src="data:image/png;base64,{CITRA_LOGO_BASE64}" alt="CitraScope!" style="width: 60px; height: 80px;">'
+    replacement = f'<img src="data:image/png;base64,{CITRA_LOGO_BASE64}" alt="CitraSense!" style="width: 60px; height: 80px;">'
     new_html = html_content.replace(pattern, replacement)
     
     if new_html == html_content:

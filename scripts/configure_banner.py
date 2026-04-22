@@ -34,7 +34,7 @@ def main():
     
     # Create the banner display script with pixel-perfect citra logo
     banner_script = f"""#!/bin/bash
-# CitraScope login banner
+# CitraSense login banner
 # Displays on every interactive login
 # Pixel-perfect ASCII art from citra-tiny.png (6x8 pixels)
 
@@ -55,7 +55,7 @@ echo ""
 
 # Display system info
 echo -e "${{CYAN}}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${{RESET}}"
-echo -e "  ${{BOLD}}${{YELLOW}}CitraScope${{RESET}}"
+echo -e "  ${{BOLD}}${{YELLOW}}CitraSense${{RESET}}"
 echo -e "  ${{GREEN}}Hostname:${{RESET}} ${{BOLD}}$HOSTNAME${{RESET}}"
 echo -e "  ${{GREEN}}Web UI:${{RESET}}   http://$HOSTNAME.local"
 echo -e "${{CYAN}}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${{RESET}}"
@@ -66,7 +66,7 @@ echo ""
     profile_d = rootfs / "etc" / "profile.d"
     profile_d.mkdir(parents=True, exist_ok=True)
     
-    banner_path = profile_d / "citrascope-banner.sh"
+    banner_path = profile_d / "citrasense-banner.sh"
     banner_path.write_text(banner_script)
     banner_path.chmod(0o755)
     

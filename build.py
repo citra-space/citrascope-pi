@@ -108,8 +108,8 @@ def run_build(args, log_file, version='dev'):
         '-e', f'IMAGE_VERSION={version}',
     ]
 
-    # Forward citrascope source config into the container
-    for env_var in ('CITRASCOPE_GITHUB_REPO', 'CITRASCOPE_GITHUB_REF'):
+    # Forward citrasense source config into the container
+    for env_var in ('CITRASENSE_GITHUB_REPO', 'CITRASENSE_GITHUB_REF'):
         val = os.environ.get(env_var)
         if val:
             cmd += ['-e', f'{env_var}={val}']
@@ -208,7 +208,7 @@ def main():
         # Unescape for display (convert \\033 to \033)
         display_line = line.replace("\\033", "\033")
         print("  " + display_line)
-    print("\n  Let's build a CitraScope image!!\n")
+    print("\n  Let's build a CitraSense image!!\n")
 
     # Get version from bump-my-version
     version = 'dev'  # Default fallback
@@ -218,10 +218,10 @@ def main():
             capture_output=True, text=True, check=True
         )
         version = result.stdout.strip()
-        print(f"  CitraScope Pi Builder Version: {version}\n")
+        print(f"  CitraSense Pi Builder Version: {version}\n")
     except (subprocess.CalledProcessError, FileNotFoundError):
         # Fallback if bump-my-version not installed
-        print(f"  CitraScope Pi Builder Version: {version} (dev build)\n")
+        print(f"  CitraSense Pi Builder Version: {version} (dev build)\n")
 
     # Get user IDs
     uid, gid = get_user_ids()
@@ -233,7 +233,7 @@ def main():
     log_file = log_dir / f"build_{timestamp}.log"
     
     with open(log_file, 'w') as f:
-        f.write(f"CitraScope Pi Build Log\n")
+        f.write(f"CitraSense Pi Build Log\n")
         f.write(f"Started at {datetime.now()}\n")
         f.write(f"{'='*80}\n\n")
     

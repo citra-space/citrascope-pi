@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Lemon Pi Image Builder
-Build a complete Raspberry Pi image with Citrascope telescope control software.
+Build a complete Raspberry Pi image with Citrasense telescope control software.
 
 Requires Python 3.10+ (uses only standard library).
 """
@@ -41,7 +41,7 @@ import scripts.update_upgrade_chroot
 import scripts.configure_gps_timing
 import scripts.install_hardware_drivers
 import scripts.configure_banner
-import scripts.install_citrascope
+import scripts.install_citrasense
 import scripts.configure_comitup
 import scripts.enable_wifi
 
@@ -54,7 +54,7 @@ BUILD_STEPS = [
     ("Update packages", scripts.update_upgrade_chroot.main),
     ("Configure GPS timing", scripts.configure_gps_timing.main),
     ("Install hardware drivers", scripts.install_hardware_drivers.main),
-    ("Install Citrascope", scripts.install_citrascope.main),
+    ("Install Citrasense", scripts.install_citrasense.main),
     ("Configure Comitup WiFi", scripts.configure_comitup.main),
     ("Enable WiFi hardware", scripts.enable_wifi.main),
     ("Configure login banner", scripts.configure_banner.main),
@@ -248,16 +248,16 @@ def customize_image(image_path):
     with ImageMounter(image_path):
         for name, func in BUILD_STEPS:
             data = run_step(name, func)
-            if name == "Install Citrascope":
+            if name == "Install Citrasense":
                 if 'version' in data:
-                    metadata['citrascope_version'] = data['version']
+                    metadata['citrasense_version'] = data['version']
                 if 'ref' in data:
-                    metadata['citrascope_ref'] = data['ref']
+                    metadata['citrasense_ref'] = data['ref']
     
     return metadata
 
 def build_complete_image(base_image_path, output_path):
-    """Build a complete Citrascope image from base Raspberry Pi OS"""
+    """Build a complete Citrasense image from base Raspberry Pi OS"""
     # Create images directory
     images_dir = Path("images")
     images_dir.mkdir(exist_ok=True)
@@ -265,7 +265,7 @@ def build_complete_image(base_image_path, output_path):
     # Generate default output path if not provided
     if output_path is None:
         base_path = Path(base_image_path)
-        output_path = images_dir / f"{base_path.stem}-citrascope{base_path.suffix}"
+        output_path = images_dir / f"{base_path.stem}-citrasense{base_path.suffix}"
     else:
         output_path = Path(output_path)
         # If output path is relative and doesn't start with images/, put it there
@@ -342,16 +342,16 @@ def build_complete_image(base_image_path, output_path):
     print(f"{'='*60}\n", flush=True)
     metadata = customize_image(str(output_path))
     
-    # Rename output file: include citrascope version only for tagged releases
+    # Rename output file: include citrasense version only for tagged releases
     image_version = os.environ.get('IMAGE_VERSION', 'dev')
-    citrascope_version = metadata.get('citrascope_version')
-    citrascope_ref = metadata.get('citrascope_ref', 'main')
+    citrasense_version = metadata.get('citrasense_version')
+    citrasense_ref = metadata.get('citrasense_ref', 'main')
     is_release = image_version.startswith('v')
 
-    if is_release and citrascope_version:
-        new_name = f"citrascope-pi-{image_version}-cs{citrascope_version}.img"
+    if is_release and citrasense_version:
+        new_name = f"citrasense-pi-{image_version}-cs{citrasense_version}.img"
     else:
-        new_name = f"citrascope-pi-{image_version}-{citrascope_ref}.img"
+        new_name = f"citrasense-pi-{image_version}-{citrasense_ref}.img"
 
     new_output_path = output_path.parent / new_name
     output_path.rename(new_output_path)
@@ -373,7 +373,7 @@ def build_complete_image(base_image_path, output_path):
 def main():
     
     parser = argparse.ArgumentParser(
-        description='Build Raspberry Pi images with Citrascope telescope control software',
+        description='Build Raspberry Pi images with Citrasense telescope control software',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -381,30 +381,30 @@ Examples:
   sudo ./build_image.py
 
   # Build from a specific branch
-  sudo ./build_image.py --citrascope-ref feature-calibration
+  sudo ./build_image.py --citrasense-ref feature-calibration
 
   # Build from a specific release tag
-  sudo ./build_image.py --citrascope-ref v0.12.0
+  sudo ./build_image.py --citrasense-ref v0.12.0
 
   # Build from a fork
-  sudo ./build_image.py --citrascope-repo https://github.com/user/citrascope.git
+  sudo ./build_image.py --citrasense-repo https://github.com/user/citrasense.git
 
   # Build from existing image with custom output name
-  sudo ./build_image.py raspios-bookworm-arm64-lite.img -o citrascope-v1.0.img
+  sudo ./build_image.py raspios-bookworm-arm64-lite.img -o citrasense-v1.0.img
         """
     )
     
     parser.add_argument('image', nargs='?', help='Path to Raspberry Pi OS image file (auto-downloads if not provided)')
-    parser.add_argument('-o', '--output', help='Output image path (default: adds -citrascope suffix)')
-    parser.add_argument('--citrascope-ref', help='Git branch, tag, or commit SHA to install (default: main)')
-    parser.add_argument('--citrascope-repo', help='Git repo URL for Citrascope (default: citra-space/citrascope)')
+    parser.add_argument('-o', '--output', help='Output image path (default: adds -citrasense suffix)')
+    parser.add_argument('--citrasense-ref', help='Git branch, tag, or commit SHA to install (default: main)')
+    parser.add_argument('--citrasense-repo', help='Git repo URL for Citrasense (default: citra-space/citrasense)')
     
     args = parser.parse_args()
     
-    if args.citrascope_ref:
-        os.environ['CITRASCOPE_GITHUB_REF'] = args.citrascope_ref
-    if args.citrascope_repo:
-        os.environ['CITRASCOPE_GITHUB_REPO'] = args.citrascope_repo
+    if args.citrasense_ref:
+        os.environ['CITRASENSE_GITHUB_REF'] = args.citrasense_ref
+    if args.citrasense_repo:
+        os.environ['CITRASENSE_GITHUB_REPO'] = args.citrasense_repo
     
     try:
         # Check if running as root
@@ -421,7 +421,7 @@ Examples:
             image_path = download_raspios()
         
         # Build complete image
-        print("\n>>> Building complete Citrascope image\n", flush=True)
+        print("\n>>> Building complete Citrasense image\n", flush=True)
         build_complete_image(image_path, args.output)
     
     except SystemExit:

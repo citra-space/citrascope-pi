@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Install Citrascope into a mounted Raspberry Pi image.
-This script sets up a Python virtual environment and installs Citrascope with INDI support.
+Install Citrasense into a mounted Raspberry Pi image.
+This script sets up a Python virtual environment and installs Citrasense with INDI support.
 
 SECURITY NOTE: This script avoids shell injection vulnerabilities by:
 - Using subprocess.run() with list arguments (NOT shell=True with f-strings)
@@ -16,20 +16,20 @@ import subprocess
 from contextlib import contextmanager
 from build_result import BuildResult
 from config import (
-    USERNAME, CITRASCOPE_VENV_PATH, CITRASCOPE_SOURCE_DIR,
+    USERNAME, CITRASENSE_VENV_PATH, CITRASENSE_SOURCE_DIR,
     ROOTFS_MOUNT, USER_UID, USER_GID,
 )
 
 # Default repo and ref — overridable via env var at call time (not import time),
 # so that build_image.py CLI args take effect even after this module is imported.
-_DEFAULT_REPO = "https://github.com/citra-space/citrascope.git"
+_DEFAULT_REPO = "https://github.com/citra-space/citrasense.git"
 _DEFAULT_REF = "main"
 
 
 def _get_git_config():
     """Read git source config from env vars, falling back to defaults."""
-    repo = os.environ.get("CITRASCOPE_GITHUB_REPO", _DEFAULT_REPO)
-    ref = os.environ.get("CITRASCOPE_GITHUB_REF", _DEFAULT_REF)
+    repo = os.environ.get("CITRASENSE_GITHUB_REPO", _DEFAULT_REPO)
+    ref = os.environ.get("CITRASENSE_GITHUB_REF", _DEFAULT_REF)
     return repo, ref
 
 @contextmanager
@@ -61,8 +61,8 @@ def mount_context(rootfs_path):
             except subprocess.CalledProcessError:
                 pass
 
-def install_citrascope(rootfs_path, homedir):
-    """Install Citrascope and configure it to run on boot"""
+def install_citrasense(rootfs_path, homedir):
+    """Install Citrasense and configure it to run on boot"""
     
     print("Installing pyenv and Python 3.12...")
     with mount_context(rootfs_path):
@@ -102,7 +102,7 @@ def install_citrascope(rootfs_path, homedir):
         # Clean up script
         os.remove(pyenv_script_path)
     
-    print("Creating Citrascope virtual environment...")
+    print("Creating Citrasense virtual environment...")
     with mount_context(rootfs_path):
         # Create virtual environment using pyenv's Python 3.12 directly
         # Build python path - pyenv installs to 3.12.x, find the exact version
@@ -120,27 +120,27 @@ def install_citrascope(rootfs_path, homedir):
         subprocess.run([
             'chroot', rootfs_path,
             'su', '-', USERNAME, '-c',
-            python_path + ' -m venv ' + CITRASCOPE_VENV_PATH
+            python_path + ' -m venv ' + CITRASENSE_VENV_PATH
         ], check=True)
         
         repo, ref = _get_git_config()
-        print(f"Cloning Citrascope from {repo} (ref: {ref})...")
+        print(f"Cloning Citrasense from {repo} (ref: {ref})...")
 
         # Clone the repo as the citra user
         subprocess.run([
             'chroot', rootfs_path, 'su', '-', USERNAME, '-c',
-            'git clone ' + repo + ' ' + CITRASCOPE_SOURCE_DIR
+            'git clone ' + repo + ' ' + CITRASENSE_SOURCE_DIR
         ], check=True)
 
         # Check out the requested branch/tag/SHA
         subprocess.run([
             'chroot', rootfs_path, 'su', '-', USERNAME, '-c',
-            'git -C ' + CITRASCOPE_SOURCE_DIR + ' checkout ' + ref
+            'git -C ' + CITRASENSE_SOURCE_DIR + ' checkout ' + ref
         ], check=True)
 
-        print("Installing Citrascope with INDI support (editable)...")
+        print("Installing Citrasense with INDI support (editable)...")
 
-        pip_path = os.path.join(CITRASCOPE_VENV_PATH, 'bin', 'pip')
+        pip_path = os.path.join(CITRASENSE_VENV_PATH, 'bin', 'pip')
         subprocess.run([
             'chroot', rootfs_path,
             pip_path, 'install', '--upgrade', 'pip'
@@ -148,13 +148,13 @@ def install_citrascope(rootfs_path, homedir):
 
         subprocess.run([
             'chroot', rootfs_path,
-            pip_path, 'install', '-e', CITRASCOPE_SOURCE_DIR + '[indi,zwo-mount]'
+            pip_path, 'install', '-e', CITRASENSE_SOURCE_DIR + '[indi,zwo-mount]'
         ], check=True)
 
         # Get installed version
         result = subprocess.run([
             'chroot', rootfs_path,
-            pip_path, 'show', 'citrascope'
+            pip_path, 'show', 'citrasense'
         ], capture_output=True, text=True, check=True)
 
         version = None
@@ -164,17 +164,17 @@ def install_citrascope(rootfs_path, homedir):
                 break
 
         if version:
-            print(f"  ✓ Citrascope v{version} ({ref}) installed successfully")
+            print(f"  ✓ Citrasense v{version} ({ref}) installed successfully")
             return version
         else:
-            print("  ✓ Citrascope installed successfully")
+            print("  ✓ Citrasense installed successfully")
             return "unknown"
 
 def create_systemd_service(rootfs_path):
-    """Create systemd service for Citrascope"""
+    """Create systemd service for Citrasense"""
     
     service_content = f"""[Unit]
-Description=Citrascope Telescope Control Daemon
+Description=Citrasense Telescope Control Daemon
 After=network-online.target
 Wants=network-online.target
 
@@ -182,7 +182,7 @@ Wants=network-online.target
 Type=simple
 User={USERNAME}
 WorkingDirectory=/home/{USERNAME}
-ExecStart={CITRASCOPE_VENV_PATH}/bin/citrascope --web-port 80
+ExecStart={CITRASENSE_VENV_PATH}/bin/citrasense --web-port 80
 Restart=on-failure
 # Allow binding to privileged port 80 without running as root
 AmbientCapabilities=CAP_NET_BIND_SERVICE
@@ -191,20 +191,20 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 """
     
-    service_path = os.path.join(rootfs_path, 'etc/systemd/system/citrascope.service')
+    service_path = os.path.join(rootfs_path, 'etc/systemd/system/citrasense.service')
     with open(service_path, 'w') as f:
         f.write(service_content)
     
-    print("Created citrascope.service")
+    print("Created citrasense.service")
     
     # Enable the service
-    service_link = os.path.join(rootfs_path, 'etc/systemd/system/multi-user.target.wants/citrascope.service')
+    service_link = os.path.join(rootfs_path, 'etc/systemd/system/multi-user.target.wants/citrasense.service')
     os.makedirs(os.path.dirname(service_link), exist_ok=True)
     
     if not os.path.exists(service_link):
-        os.symlink('/etc/systemd/system/citrascope.service', service_link)
+        os.symlink('/etc/systemd/system/citrasense.service', service_link)
     
-    print("Enabled citrascope.service")
+    print("Enabled citrasense.service")
 
 def set_permissions(rootfs_path, homedir):
     """Set correct ownership for user files"""
@@ -244,8 +244,8 @@ def main():
             subprocess.run(['cp', resolv_conf, resolv_backup])
         subprocess.run(['cp', '/etc/resolv.conf', resolv_conf])
         
-        # Install Citrascope and get version
-        citrascope_version = install_citrascope(ROOTFS_MOUNT, HOMEDIR)
+        # Install Citrasense and get version
+        citrasense_version = install_citrasense(ROOTFS_MOUNT, HOMEDIR)
         
         # Create systemd service
         create_systemd_service(ROOTFS_MOUNT)
@@ -258,17 +258,17 @@ def main():
             subprocess.run(['mv', resolv_backup, resolv_conf])
         
         _, ref = _get_git_config()
-        print(f"Citrascope installation completed successfully!")
-        print(f"Installed version: {citrascope_version} (ref: {ref})")
+        print(f"Citrasense installation completed successfully!")
+        print(f"Installed version: {citrasense_version} (ref: {ref})")
         
         data = {'ref': ref}
-        if citrascope_version and citrascope_version != "unknown":
-            data['version'] = citrascope_version
+        if citrasense_version and citrasense_version != "unknown":
+            data['version'] = citrasense_version
         
         return BuildResult(success=True, data=data)
         
     except Exception as e:
-        print(f"Error installing Citrascope: {e}")
+        print(f"Error installing Citrasense: {e}")
         return BuildResult(success=False)
 
 if __name__ == "__main__":
